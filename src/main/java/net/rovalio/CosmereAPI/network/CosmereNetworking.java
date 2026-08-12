@@ -5,9 +5,7 @@ import net.neoforged.neoforge.network.registration.HandlerThread;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.rovalio.CosmereAPI.network.handler.ClientPayloadHandler;
 import net.rovalio.CosmereAPI.network.handler.ServerPayloadHandler;
-import net.rovalio.CosmereAPI.network.payload.NetworkPingS2CPayload;
-import net.rovalio.CosmereAPI.network.payload.NetworkPongC2SPayload;
-import net.rovalio.CosmereAPI.network.payload.OpenOnboardingS2CPayload;
+import net.rovalio.CosmereAPI.network.payload.*;
 
 public final class CosmereNetworking {
 
@@ -43,6 +41,30 @@ public final class CosmereNetworking {
                 OpenOnboardingS2CPayload.TYPE,
                 OpenOnboardingS2CPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleOpenOnboarding
+        );
+
+        registrar.playToServer(
+                SelectOriginC2SPayload.TYPE,
+                SelectOriginC2SPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleSelectOrigin
+        );
+
+        registrar.playToServer(
+                RandomGlobalOriginC2SPayload.TYPE,
+                RandomGlobalOriginC2SPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleRandomGlobalOrigin
+        );
+
+        registrar.playToServer(
+                RandomPlanetOriginC2SPayload.TYPE,
+                RandomPlanetOriginC2SPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleRandomPlanetOrigin
+        );
+
+        registrar.playToClient(
+                OnboardingCompleteS2CPayload.TYPE,
+                OnboardingCompleteS2CPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleOnboardingComplete
         );
     }
 }

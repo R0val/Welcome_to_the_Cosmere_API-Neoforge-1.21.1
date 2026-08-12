@@ -4,9 +4,9 @@ import net.minecraft.resources.ResourceKey;
 
 import java.util.Objects;
 
-public record OriginDefinition (ResourceKey<PlanetDefinition> planet) {
+public record OriginDefinition (ResourceKey<PlanetDefinition> race) {
 
     public OriginDefinition {
-        Objects.requireNonNull(planet, "Origin cannot be null");
+        Objects.requireNonNull(race, "Origin cannot be null");
     }
 }

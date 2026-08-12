@@ -7,17 +7,18 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.rovalio.CosmereAPI.CosmereAPI;
 import net.rovalio.CosmereAPI.network.payload.NetworkPingS2CPayload;
-import net.rovalio.CosmereAPI.player.ConnectionType;
-import net.rovalio.CosmereAPI.player.CosmereAttachments;
-import net.rovalio.CosmereAPI.player.CosmerePlayerData;
-import net.rovalio.CosmereAPI.player.SpiritwebData;
+import net.rovalio.CosmereAPI.player.*;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
+import net.rovalio.CosmereAPI.registry.definition.LocationDefinition;
 import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
 import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
+import net.rovalio.CosmereAPI.registry.definition.ShardDefinition;
 import net.rovalio.CosmereAPI.registry.test.TestDefinition;
 
 import java.util.Collection;
@@ -135,7 +136,9 @@ public class CosmereCommands {
                         )
 
                         .then(Commands.literal("origin")
-                                //Mostrará planeta y origen
+                                .executes(context ->
+                                        showOrigin(context.getSource())
+                                )
                         )
                 )
 
@@ -426,7 +429,9 @@ public class CosmereCommands {
 
     private static int showRegistryTest(CommandSourceStack source) {
 
-        // Get registered definitions
+        // =========================================================
+        // GET REGISTERED DEFINITIONS
+        // =========================================================
 
         PlanetDefinition testPlanet =
                 CosmereRegistries.PLANET_REGISTRY.get(
@@ -443,43 +448,133 @@ public class CosmereCommands {
                         TestDefinition.TEST_ORIGIN_B.getId()
                 );
 
-        // Check existence
+        ShardDefinition testShard =
+                CosmereRegistries.SHARD_REGISTRY.get(
+                        TestDefinition.TEST_SHARD.getId()
+                );
 
-        boolean planetExists = testPlanet != null;
-        boolean originAExists = testOriginA != null;
-        boolean originBExists = testOriginB != null;
+        LocationDefinition testLocation =
+                CosmereRegistries.LOCATION_REGISTRY.get(
+                        TestDefinition.TEST_LOCATION.getId()
+                );
 
-        // Check planet dimension
+
+        // =========================================================
+        // CHECK EXISTENCE
+        // =========================================================
+
+        boolean planetExists =
+                testPlanet != null;
+
+        boolean originAExists =
+                testOriginA != null;
+
+        boolean originBExists =
+                testOriginB != null;
+
+        boolean shardExists =
+                testShard != null;
+
+        boolean locationExists =
+                testLocation != null;
+
+
+        // =========================================================
+        // CHECK PLANET DIMENSION
+        // =========================================================
 
         boolean planetDimensionCorrect =
                 planetExists
-                        && Level.OVERWORLD.equals(testPlanet.dimension());
+                        && Level.OVERWORLD.equals(
+                        testPlanet.dimension()
+                );
 
-        // Check origin -> planet relationships
+
+        // =========================================================
+        // CHECK ORIGIN -> PLANET RELATIONSHIPS
+        // =========================================================
 
         boolean originAPlanetCorrect =
                 originAExists
                         && TestDefinition.TEST_PLANET_KEY.equals(
-                        testOriginA.planet()
+                        testOriginA.race()
                 );
 
         boolean originBPlanetCorrect =
                 originBExists
                         && TestDefinition.TEST_PLANET_KEY.equals(
-                        testOriginB.planet()
+                        testOriginB.race()
                 );
 
-        // Global result
+
+        // =========================================================
+        // CHECK CONNECTION TARGET VALIDATION
+        // =========================================================
+
+        boolean registeredShardAccepted =
+                ConnectionTargetValidator.isValid(
+                        ConnectionType.SHARD,
+                        TestDefinition.TEST_SHARD.getId()
+                );
+
+        boolean registeredLocationAccepted =
+                ConnectionTargetValidator.isValid(
+                        ConnectionType.LOCATION,
+                        TestDefinition.TEST_LOCATION.getId()
+                );
+
+
+        // =========================================================
+        // CHECK INVALID TARGET REJECTION
+        // =========================================================
+
+        ResourceLocation invalidShardId =
+                ResourceLocation.fromNamespaceAndPath(
+                        CosmereAPI.MOD_ID,
+                        "invalid_test_shard"
+                );
+
+        ResourceLocation invalidLocationId =
+                ResourceLocation.fromNamespaceAndPath(
+                        CosmereAPI.MOD_ID,
+                        "invalid_test_location"
+                );
+
+        boolean invalidShardRejected =
+                !ConnectionTargetValidator.isValid(
+                        ConnectionType.SHARD,
+                        invalidShardId
+                );
+
+        boolean invalidLocationRejected =
+                !ConnectionTargetValidator.isValid(
+                        ConnectionType.LOCATION,
+                        invalidLocationId
+                );
+
+
+        // =========================================================
+        // GLOBAL RESULT
+        // =========================================================
 
         boolean success =
                 planetExists
                         && originAExists
                         && originBExists
+                        && shardExists
+                        && locationExists
                         && planetDimensionCorrect
                         && originAPlanetCorrect
-                        && originBPlanetCorrect;
+                        && originBPlanetCorrect
+                        && registeredShardAccepted
+                        && registeredLocationAccepted
+                        && invalidShardRejected
+                        && invalidLocationRejected;
 
-        // Output
+
+        // =========================================================
+        // OUTPUT
+        // =========================================================
 
         source.sendSuccess(
                 () -> Component.literal(
@@ -487,6 +582,9 @@ public class CosmereCommands {
                 ),
                 false
         );
+
+
+        // PLANET
 
         source.sendSuccess(
                 () -> Component.literal(
@@ -507,6 +605,9 @@ public class CosmereCommands {
                 ),
                 false
         );
+
+
+        // ORIGINS
 
         source.sendSuccess(
                 () -> Component.literal(
@@ -543,6 +644,67 @@ public class CosmereCommands {
                 ),
                 false
         );
+
+
+        // SHARD
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Shard §f"
+                                + TestDefinition.TEST_SHARD.getId()
+                                + ": "
+                                + status(shardExists)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Registered Shard accepted: "
+                                + status(registeredShardAccepted)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Unknown Shard rejected: "
+                                + status(invalidShardRejected)
+                ),
+                false
+        );
+
+
+        // LOCATION
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Location §f"
+                                + TestDefinition.TEST_LOCATION.getId()
+                                + ": "
+                                + status(locationExists)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Registered Location accepted: "
+                                + status(registeredLocationAccepted)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Unknown Location rejected: "
+                                + status(invalidLocationRejected)
+                ),
+                false
+        );
+
+
+        // RESULT
 
         source.sendSuccess(
                 () -> Component.literal(
@@ -635,12 +797,86 @@ public class CosmereCommands {
 
         data.setOnboardingComplete(value);
 
+        // Reset origin data when onboarding is reset
+        if (!value) {
+            data.clearOriginSelection();
+        }
+
         source.sendSuccess(
                 () -> Component.literal(
                         "§7Onboarding complete set to: "
                                 + (value ? "§atrue" : "§cfalse")
+                                + (!value
+                                ? " §7| Origin selection cleared."
+                                : "")
                 ),
                 false
+        );
+
+        return 1;
+    }
+
+    private static int showOrigin(
+            CommandSourceStack source
+    ) {
+
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "Este comando debe ser ejecutado por un jugador."
+                    )
+            );
+
+            return 0;
+        }
+
+        CosmerePlayerData data =
+                CosmereAttachments.get(player);
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§1------ §6ORIGIN STATE §1------"
+                )
+        );
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§7Origin Planet: §b"
+                                + (
+                                data.getOriginPlanetId() != null
+                                        ? data.getOriginPlanetId()
+                                        : "NONE"
+                        )
+                )
+        );
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§7Origin: §d"
+                                + (
+                                data.getOriginId() != null
+                                        ? data.getOriginId()
+                                        : "NONE"
+                        )
+                )
+        );
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§7Onboarding Complete: "
+                                + (
+                                data.isOnboardingComplete()
+                                        ? "§atrue"
+                                        : "§cfalse"
+                        )
+                )
+        );
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§1--------------------------"
+                )
         );
 
         return 1;

@@ -1,6 +1,8 @@
 package net.rovalio.CosmereAPI.client.screen;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -9,6 +11,28 @@ public class TemporaryOnboardingScreen extends Screen {
     public TemporaryOnboardingScreen() {
         super(Component.literal("Cosmere Onboarding"));
     }
+
+    @Override
+    protected void init() {
+        super.init();
+
+        this.addRenderableWidget(
+                Button.builder(
+                                Component.literal("Continue"),
+                                button -> Minecraft.getInstance().setScreen(
+                                        new TemporaryPlanetSelectionScreen()
+                                )
+                        )
+                        .bounds(
+                                this.width / 2 - 50,
+                                this.height / 2 + 40,
+                                100,
+                                20
+                        )
+                        .build()
+        );
+    }
+
 
     @Override
     public void render(

@@ -2,11 +2,11 @@ package net.rovalio.CosmereAPI.network.handler;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.rovalio.CosmereAPI.client.screen.TemporaryOnboardingScreen;
-import net.rovalio.CosmereAPI.network.payload.NetworkPingS2CPayload;
-import net.rovalio.CosmereAPI.network.payload.NetworkPongC2SPayload;
-import net.rovalio.CosmereAPI.network.payload.OpenOnboardingS2CPayload;
+import net.rovalio.CosmereAPI.network.payload.*;
+import net.rovalio.CosmereAPI.onboarding.OnboardingManager;
 import org.slf4j.Logger;
 
 public final class ClientPayloadHandler {
@@ -56,6 +56,36 @@ public final class ClientPayloadHandler {
 
             LOGGER.error(
                     "[Cosmere API Onboarding] Failed to open onboarding screen",
+                    exception
+            );
+
+            return null;
+        });
+    }
+
+    public static void handleOnboardingComplete(
+            OnboardingCompleteS2CPayload payload,
+            IPayloadContext context
+    ) {
+
+        LOGGER.info(
+                "[Cosmere API Onboarding] Completion confirmation received | Thread: {}",
+                Thread.currentThread().getName()
+        );
+
+        context.enqueueWork(() -> {
+
+            LOGGER.info(
+                    "[Cosmere API Onboarding] Closing onboarding screen | Thread: {}",
+                    Thread.currentThread().getName()
+            );
+
+            Minecraft.getInstance().setScreen(null);
+
+        }).exceptionally(exception -> {
+
+            LOGGER.error(
+                    "[Cosmere API Onboarding] Failed to close onboarding screen",
                     exception
             );
 

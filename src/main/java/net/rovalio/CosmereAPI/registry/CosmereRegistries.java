@@ -5,10 +5,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 import net.rovalio.CosmereAPI.CosmereAPI;
+import net.rovalio.CosmereAPI.registry.definition.LocationDefinition;
 import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
 import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
 
 import net.minecraft.core.Registry;
+import net.rovalio.CosmereAPI.registry.definition.ShardDefinition;
 
 public final class CosmereRegistries {
 
@@ -41,6 +43,34 @@ public final class CosmereRegistries {
                     .create();
 
 
+    //Shards
+    public static final ResourceKey<Registry<ShardDefinition>> SHARD_REGISTRY_KEY =
+            ResourceKey.createRegistryKey(
+                    ResourceLocation.fromNamespaceAndPath(
+                            CosmereAPI.MOD_ID,
+                            "shard"
+                    )
+            );
+
+    public static final Registry<ShardDefinition> SHARD_REGISTRY =
+            new RegistryBuilder<>(SHARD_REGISTRY_KEY)
+                    .sync(true)
+                    .create();
+
+    //Location
+    public static final ResourceKey<Registry<LocationDefinition>> LOCATION_REGISTRY_KEY =
+            ResourceKey.createRegistryKey(
+                    ResourceLocation.fromNamespaceAndPath(
+                            CosmereAPI.MOD_ID,
+                            "location"
+                    )
+            );
+
+    public static final Registry<LocationDefinition> LOCATION_REGISTRY =
+            new RegistryBuilder<>(LOCATION_REGISTRY_KEY)
+                    .sync(true)
+                    .create();
+
     private CosmereRegistries() {
     }
 
@@ -48,5 +78,7 @@ public final class CosmereRegistries {
     public static void registerRegistries(NewRegistryEvent event) {
         event.register(PLANET_REGISTRY);
         event.register(ORIGIN_REGISTRY);
+        event.register(SHARD_REGISTRY);
+        event.register(LOCATION_REGISTRY);
     }
 }

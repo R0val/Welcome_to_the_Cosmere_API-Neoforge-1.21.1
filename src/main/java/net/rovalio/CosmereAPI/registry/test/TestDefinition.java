@@ -8,8 +8,11 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.rovalio.CosmereAPI.CosmereAPI;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
+import net.rovalio.CosmereAPI.registry.definition.LocationDefinition;
 import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
 import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
+import net.rovalio.CosmereAPI.registry.definition.ShardDefinition;
+
 
 public final class TestDefinition {
 
@@ -22,6 +25,18 @@ public final class TestDefinition {
     public static final DeferredRegister<OriginDefinition> ORIGINS =
             DeferredRegister.create(
                     CosmereRegistries.ORIGIN_REGISTRY,
+                    CosmereAPI.MOD_ID
+            );
+
+    public static final DeferredRegister<ShardDefinition> SHARDS =
+            DeferredRegister.create(
+                    CosmereRegistries.SHARD_REGISTRY,
+                    CosmereAPI.MOD_ID
+            );
+
+    public static final DeferredRegister<LocationDefinition> LOCATIONS =
+            DeferredRegister.create(
+                    CosmereRegistries.LOCATION_REGISTRY,
                     CosmereAPI.MOD_ID
             );
 
@@ -58,13 +73,26 @@ public final class TestDefinition {
                     () -> new OriginDefinition(TEST_PLANET_KEY)
             );
 
+    public static final DeferredHolder<ShardDefinition, ShardDefinition> TEST_SHARD =
+            SHARDS.register(
+                    "test_shard",
+                    ShardDefinition::new
+            );
 
-    private void TestDefinitions() {
+    public static final DeferredHolder<LocationDefinition, LocationDefinition> TEST_LOCATION =
+            LOCATIONS.register(
+                    "test_location",
+                    LocationDefinition::new
+            );
+
+    private TestDefinition() {
     }
 
 
     public static void register(IEventBus modBus) {
         PLANETS.register(modBus);
         ORIGINS.register(modBus);
+        SHARDS.register(modBus);
+        LOCATIONS.register(modBus);
     }
 }
