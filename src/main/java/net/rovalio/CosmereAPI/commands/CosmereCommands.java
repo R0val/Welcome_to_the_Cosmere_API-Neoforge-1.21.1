@@ -9,6 +9,8 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.rovalio.CosmereAPI.network.payload.NetworkPingS2CPayload;
 import net.rovalio.CosmereAPI.player.ConnectionType;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.player.CosmerePlayerData;
@@ -135,12 +137,6 @@ public class CosmereCommands {
                         .then(Commands.literal("origin")
                                 //Mostrará planeta y origen
                         )
-
-                        .then(Commands.literal("registrytest")
-                                .executes(context ->
-                                        showRegistryTest(context.getSource())
-                                )
-                        )
                 )
 
                 .then(Commands.literal("connection")
@@ -163,7 +159,58 @@ public class CosmereCommands {
                         .then(Commands.literal("grant"))
                         .then(Commands.literal("revoke"))
                 )
+
+                .then(Commands.literal("test")
+                        .then(Commands.literal("network")
+
+                                .then(Commands.literal("ping")
+
+                                        .executes(context ->
+                                                networkPing(
+                                                        context.getSource()
+                                                )
+                                        )
+                                )
+                        )
+
+                        .then(Commands.literal("registrytest")
+                                .executes(context ->
+                                        showRegistryTest(context.getSource())
+                                )
+                        )
+
+                        .then(Commands.literal("onboarding")
+
+                                .then(Commands.literal("status")
+                                        .executes(context ->
+                                                onboardingStatus(
+                                                        context.getSource()
+                                                )
+                                        )
+                                )
+
+                                .then(Commands.literal("complete")
+                                        .executes(context ->
+                                                setOnboarding(
+                                                        context.getSource(),
+                                                        true
+                                                )
+                                        )
+                                )
+
+                                .then(Commands.literal("reset")
+                                        .executes(context ->
+                                                setOnboarding(
+                                                        context.getSource(),
+                                                        false
+                                                )
+                                        )
+                                )
+                        )
+
+                )
         );
+
 
     }
 
@@ -231,7 +278,7 @@ public class CosmereCommands {
             player.sendSystemMessage(
                     Component.literal(
                             "§7Identity: §f"
-                                    + spiritweb.getIdentity().getIdentityId()
+                                    + player
                     )
             );
         }
@@ -518,5 +565,84 @@ public class CosmereCommands {
 
     private static String status(boolean result) {
         return result ? "§aOK" : "§cFAILED";
+    }
+
+    private static int networkPing(
+            CommandSourceStack source
+    ) {
+
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "Este comando debe ser ejecutado por un jugador."
+                    )
+            );
+
+            return 0;
+        }
+
+        PacketDistributor.sendToPlayer(
+                player,
+                NetworkPingS2CPayload.INSTANCE
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Cosmere API network test successful."
+                ),
+                false
+        );
+
+        return 1;
+    }
+
+    private static int onboardingStatus(
+            CommandSourceStack source
+    ) {
+
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            return 0;
+        }
+
+        CosmerePlayerData data =
+                CosmereAttachments.get(player);
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Onboarding complete: "
+                                + (data.isOnboardingComplete()
+                                ? "§atrue"
+                                : "§cfalse")
+                ),
+                false
+        );
+
+        return 1;
+    }
+
+    private static int setOnboarding(
+            CommandSourceStack source,
+            boolean value
+    ) {
+
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            return 0;
+        }
+
+        CosmerePlayerData data =
+                CosmereAttachments.get(player);
+
+        data.setOnboardingComplete(value);
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Onboarding complete set to: "
+                                + (value ? "§atrue" : "§cfalse")
+                ),
+                false
+        );
+
+        return 1;
     }
 }

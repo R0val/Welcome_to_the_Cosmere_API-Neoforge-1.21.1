@@ -13,6 +13,8 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.rovalio.CosmereAPI.commands.CosmereCommands;
+import net.rovalio.CosmereAPI.network.CosmereNetworking;
+import net.rovalio.CosmereAPI.onboarding.PlayerLoginHandler;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
 import net.rovalio.CosmereAPI.registry.test.TestDefinition;
@@ -35,7 +37,11 @@ public class CosmereAPI {
 
         modEventBus.addListener(CosmereRegistries::registerRegistries);
 
+        modEventBus.addListener(CosmereNetworking::registerPayloadHandlers);
+
         TestDefinition.register(modEventBus);
+
+        PlayerLoginHandler.register();
 
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);

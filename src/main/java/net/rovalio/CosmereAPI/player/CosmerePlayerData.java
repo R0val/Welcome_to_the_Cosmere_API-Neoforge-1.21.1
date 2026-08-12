@@ -11,7 +11,21 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
     private static final String TAG_DATA_VERSION = "DataVersion";
     private static final String TAG_SPIRITWEB = "Spiritweb";
 
+    private static final String TAG_ONBOARDING_COMPLETE =
+            "OnboardingComplete";
+
     private final SpiritwebData spiritweb;
+
+    //Onboarding
+    private boolean onboardingComplete = false;
+
+    public boolean isOnboardingComplete() {
+        return onboardingComplete;
+    }
+
+    public void setOnboardingComplete(boolean onboardingComplete) {
+        this.onboardingComplete = onboardingComplete;
+    }
 
     //Creation and registry of the Player's Spiritweb
     public CosmerePlayerData (){
@@ -26,6 +40,11 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
     public CompoundTag serializeNBT(HolderLookup. Provider provider) {
 
         CompoundTag tag = new CompoundTag();
+
+        tag.putBoolean(
+                TAG_ONBOARDING_COMPLETE,
+                onboardingComplete
+        );
 
         tag.putInt(
                 TAG_DATA_VERSION,
@@ -50,5 +69,7 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
                     tag.getCompound(TAG_SPIRITWEB)
             );
         }
+        onboardingComplete =
+                tag.getBoolean(TAG_ONBOARDING_COMPLETE);
     }
 }
