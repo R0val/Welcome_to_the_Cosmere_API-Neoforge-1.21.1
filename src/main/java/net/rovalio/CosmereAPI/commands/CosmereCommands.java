@@ -8,10 +8,15 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.rovalio.CosmereAPI.player.ConnectionType;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.player.CosmerePlayerData;
 import net.rovalio.CosmereAPI.player.SpiritwebData;
+import net.rovalio.CosmereAPI.registry.CosmereRegistries;
+import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
+import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
+import net.rovalio.CosmereAPI.registry.test.TestDefinition;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -38,11 +43,6 @@ public class CosmereCommands {
         dispatcher.register(Commands.literal("cosmere")
 
                 .then(Commands.literal("stats")
-                        .then(Commands.literal("show")
-                                .executes(context ->
-                                        showStats(context.getSource())
-                                )
-                        )
 
                         .then(Commands.literal("setdefault")
                                 .then(Commands.argument("targets", EntityArgument.players())
@@ -125,7 +125,23 @@ public class CosmereCommands {
                         )
                 )
 
+                .then(Commands.literal("show")
+                        .then(Commands.literal("stats")
+                                .executes(context ->
+                                        showStats(context.getSource())
+                                )
+                        )
 
+                        .then(Commands.literal("origin")
+                                //Mostrará planeta y origen
+                        )
+
+                        .then(Commands.literal("registrytest")
+                                .executes(context ->
+                                        showRegistryTest(context.getSource())
+                                )
+                        )
+                )
 
                 .then(Commands.literal("connection")
 
@@ -359,5 +375,148 @@ public class CosmereCommands {
         }
 
         return 1;
+    }
+
+    private static int showRegistryTest(CommandSourceStack source) {
+
+        // Get registered definitions
+
+        PlanetDefinition testPlanet =
+                CosmereRegistries.PLANET_REGISTRY.get(
+                        TestDefinition.TEST_PLANET.getId()
+                );
+
+        OriginDefinition testOriginA =
+                CosmereRegistries.ORIGIN_REGISTRY.get(
+                        TestDefinition.TEST_ORIGIN_A.getId()
+                );
+
+        OriginDefinition testOriginB =
+                CosmereRegistries.ORIGIN_REGISTRY.get(
+                        TestDefinition.TEST_ORIGIN_B.getId()
+                );
+
+        // Check existence
+
+        boolean planetExists = testPlanet != null;
+        boolean originAExists = testOriginA != null;
+        boolean originBExists = testOriginB != null;
+
+        // Check planet dimension
+
+        boolean planetDimensionCorrect =
+                planetExists
+                        && Level.OVERWORLD.equals(testPlanet.dimension());
+
+        // Check origin -> planet relationships
+
+        boolean originAPlanetCorrect =
+                originAExists
+                        && TestDefinition.TEST_PLANET_KEY.equals(
+                        testOriginA.planet()
+                );
+
+        boolean originBPlanetCorrect =
+                originBExists
+                        && TestDefinition.TEST_PLANET_KEY.equals(
+                        testOriginB.planet()
+                );
+
+        // Global result
+
+        boolean success =
+                planetExists
+                        && originAExists
+                        && originBExists
+                        && planetDimensionCorrect
+                        && originAPlanetCorrect
+                        && originBPlanetCorrect;
+
+        // Output
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§1------ §6REGISTRY TEST §1------"
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Planet §f"
+                                + TestDefinition.TEST_PLANET.getId()
+                                + ": "
+                                + status(planetExists)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Planet dimension §f"
+                                + Level.OVERWORLD.location()
+                                + ": "
+                                + status(planetDimensionCorrect)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Origin §f"
+                                + TestDefinition.TEST_ORIGIN_A.getId()
+                                + ": "
+                                + status(originAExists)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Origin A -> Planet: "
+                                + status(originAPlanetCorrect)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Origin §f"
+                                + TestDefinition.TEST_ORIGIN_B.getId()
+                                + ": "
+                                + status(originBExists)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Origin B -> Planet: "
+                                + status(originBPlanetCorrect)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        success
+                                ? "§aRegistry test: SUCCESS"
+                                : "§cRegistry test: FAILED"
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§1---------------------------"
+                ),
+                false
+        );
+
+        return success ? 1 : 0;
+    }
+
+    private static String status(boolean result) {
+        return result ? "§aOK" : "§cFAILED";
     }
 }

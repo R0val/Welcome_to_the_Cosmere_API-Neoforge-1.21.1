@@ -15,6 +15,7 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.rovalio.CosmereAPI.commands.CosmereCommands;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
+import net.rovalio.CosmereAPI.registry.test.TestDefinition;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -33,6 +34,8 @@ public class CosmereAPI {
         CosmereAttachments.register(modEventBus);
 
         modEventBus.addListener(CosmereRegistries::registerRegistries);
+
+        TestDefinition.register(modEventBus);
 
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);

@@ -1,9 +1,9 @@
 package net.rovalio.CosmereAPI.registry.definition;
 
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 import java.util.Objects;
-import java.util.logging.Level;
 
 public record PlanetDefinition (ResourceKey<Level> dimension){
 
