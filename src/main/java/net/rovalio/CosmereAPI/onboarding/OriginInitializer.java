@@ -1,0 +1,14 @@
+package net.rovalio.CosmereAPI.onboarding;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+
+@FunctionalInterface
+public interface OriginInitializer {
+
+    boolean initialize(
+            ServerPlayer player,
+            ResourceLocation planetId,
+            ResourceLocation originId
+    );
+}

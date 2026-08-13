@@ -42,6 +42,19 @@ public class OnboardingManager {
             return false;
         }
 
+        //Delegate origin initialization to Addons
+        boolean initialized =
+                OriginInitializationRegistry
+                        .initializeIfPresent(
+                                player,
+                                planetId,
+                                originId
+                        );
+
+        if (!initialized) {
+            return false;
+        }
+
         data.setOriginSelection(
                 planetId,
                 originId
