@@ -57,20 +57,29 @@ public final class TestDefinition {
     public static final DeferredHolder<PlanetDefinition, PlanetDefinition> TEST_PLANET =
             PLANETS.register(
                     "test_planet",
-                    () -> new PlanetDefinition(Level.OVERWORLD)
+                    () -> new PlanetDefinition(
+                            Level.OVERWORLD,
+                            false
+                            )
             );
 
     /// Origin test
     public static final DeferredHolder<OriginDefinition, OriginDefinition> TEST_ORIGIN_A =
             ORIGINS.register(
                     "test_origin_a",
-                    () -> new OriginDefinition(TEST_PLANET_KEY)
+                    () -> new OriginDefinition(
+                            TEST_PLANET_KEY,
+                            false
+                    )
             );
 
     public static final DeferredHolder<OriginDefinition, OriginDefinition> TEST_ORIGIN_B =
             ORIGINS.register(
                     "test_origin_b",
-                    () -> new OriginDefinition(TEST_PLANET_KEY)
+                    () -> new OriginDefinition(
+                            TEST_PLANET_KEY,
+                            false
+                    )
             );
 
     public static final DeferredHolder<ShardDefinition, ShardDefinition> TEST_SHARD =

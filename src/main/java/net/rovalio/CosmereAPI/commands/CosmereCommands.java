@@ -9,9 +9,14 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.rovalio.CosmereAPI.CosmereAPI;
+import net.rovalio.CosmereAPI.data.CosmereDataComponents;
+import net.rovalio.CosmereAPI.data.TornPagesData;
+import net.rovalio.CosmereAPI.item.CosmereItems;
+import net.rovalio.CosmereAPI.item.custom.TornPagesItem;
 import net.rovalio.CosmereAPI.network.payload.NetworkPingS2CPayload;
 import net.rovalio.CosmereAPI.player.*;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
@@ -22,6 +27,7 @@ import net.rovalio.CosmereAPI.registry.definition.ShardDefinition;
 import net.rovalio.CosmereAPI.registry.test.TestDefinition;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 public class CosmereCommands {
@@ -188,6 +194,14 @@ public class CosmereCommands {
                                                 showRegistryContents(context.getSource())
                                         )
                                 )
+
+                                .then(Commands.literal("heldtornpagesdata")
+                                        .executes(context ->
+                                                showHeldTornPages(
+                                                        context.getSource()
+                                                )
+                                        )
+                                )
                         )
 
                         .then(Commands.literal("onboarding")
@@ -214,6 +228,18 @@ public class CosmereCommands {
                                                 setOnboarding(
                                                         context.getSource(),
                                                         false
+                                                )
+                                        )
+                                )
+                        )
+
+                        .then(Commands.literal("give")
+
+                                .then(Commands.literal("tornpages")
+
+                                        .executes(context ->
+                                                giveTestTornPages(
+                                                        context.getSource()
                                                 )
                                         )
                                 )
@@ -950,6 +976,321 @@ public class CosmereCommands {
                 Component.literal(
                         "§1--------------------------"
                 )
+        );
+
+        return 1;
+    }
+
+    private static int giveTestTornPages(
+            CommandSourceStack source
+    ) {
+
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "This command must be executed by a player."
+                    )
+            );
+
+            return 0;
+        }
+
+        //Test data
+        ResourceLocation testPlanet =
+                ResourceLocation.fromNamespaceAndPath(
+                        CosmereAPI.MOD_ID,
+                        "test_planet"
+                );
+
+        ResourceLocation testEntryA =
+                ResourceLocation.fromNamespaceAndPath(
+                        CosmereAPI.MOD_ID,
+                        "test_entry_a"
+                );
+
+        ResourceLocation testEntryB =
+                ResourceLocation.fromNamespaceAndPath(
+                        CosmereAPI.MOD_ID,
+                        "test_entry_b"
+                );
+
+
+        // =========================================================
+        // CREATE TORN PAGES
+        // =========================================================
+
+        ItemStack stack =
+                TornPagesItem.create(
+                        testPlanet,
+                        List.of(
+                                testEntryA,
+                                testEntryB
+                        )
+                );
+
+
+        //Data lecture
+        TornPagesData data =
+                stack.get(
+                        CosmereDataComponents
+                                .TORN_PAGES_DATA
+                                .get()
+                );
+
+        //validate data
+        boolean dataExists =
+                data != null;
+
+        boolean planetCorrect =
+                dataExists
+                        && testPlanet.equals(
+                        data.planetId()
+                );
+
+        boolean entriesCorrect =
+                dataExists
+                        && data.unlockedEntries().size() == 2
+                        && data.unlockedEntries().contains(testEntryA)
+                        && data.unlockedEntries().contains(testEntryB);
+
+        boolean success =
+                dataExists
+                        && planetCorrect
+                        && entriesCorrect;
+
+        //Gives valid stack
+        if (success) {
+
+            boolean added =
+                    player.getInventory().add(stack);
+
+            if (!added) {
+                player.drop(
+                        stack,
+                        false
+                );
+            }
+        }
+
+        //Output
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§1------ §6TORN PAGES TEST §1------"
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Data component exists: "
+                                + status(dataExists)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Planet: §b"
+                                + testPlanet
+                                + " "
+                                + status(planetCorrect)
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Entries stored: §d"
+                                + (
+                                dataExists
+                                        ? data.unlockedEntries().size()
+                                        : 0
+                        )
+                                + " "
+                                + status(entriesCorrect)
+                ),
+                false
+        );
+
+        if (dataExists) {
+
+            for (ResourceLocation entry
+                    : data.unlockedEntries()) {
+
+                source.sendSuccess(
+                        () -> Component.literal(
+                                "§7- §d" + entry
+                        ),
+                        false
+                );
+            }
+        }
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        success
+                                ? "§aTorn Pages data test: SUCCESS"
+                                : "§cTorn Pages data test: FAILED"
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§1-----------------------------"
+                ),
+                false
+        );
+
+        return success ? 1 : 0;
+    }
+
+    private static int showHeldTornPages(
+            CommandSourceStack source
+    ) {
+
+        //Checks if it's ran by a player
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "This command must be executed by a player."
+                    )
+            );
+
+            return 0;
+        }
+
+        //gets the helded item
+        ItemStack stack =
+                player.getMainHandItem();
+
+        //Checks what item is being helded
+        if (!stack.is(
+                CosmereItems.TORN_PAGES.get()
+        )) {
+
+            //return an error if the wrong item is being helded
+            source.sendFailure(
+                    Component.literal(
+                            "§cYou must hold Torn Pages in your main hand."
+                    )
+            );
+
+            return 0;
+        }
+
+        //reads the Torn Pages data
+        TornPagesData data =
+                stack.get(
+                        CosmereDataComponents
+                                .TORN_PAGES_DATA
+                                .get()
+                );
+
+        //Chescks if there's existent data
+        if (data == null) {
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§1------ §6TORN PAGES DATA §1------"
+                    ),
+                    false
+            );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§7Planet: §cNONE"
+                    ),
+                    false
+            );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§7Unlocked entries: §cNONE"
+                    ),
+                    false
+            );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§eThese Torn Pages contain no knowledge data."
+                    ),
+                    false
+            );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§1-----------------------------"
+                    ),
+                    false
+            );
+
+            return 1;
+        }
+
+        //Output
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§1------ §6TORN PAGES DATA §1------"
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Planet: §b"
+                                + data.planetId()
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§7Unlocked entries: §d"
+                                + data.unlockedEntries().size()
+                ),
+                false
+        );
+
+        //Shows the unlocked entries
+        if (data.unlockedEntries().isEmpty()) {
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§7- §8No entries unlocked."
+                    ),
+                    false
+            );
+
+        } else {
+
+            for (ResourceLocation entry
+                    : data.unlockedEntries()) {
+
+                source.sendSuccess(
+                        () -> Component.literal(
+                                "§7- §d" + entry
+                        ),
+                        false
+                );
+            }
+        }
+
+        //Success advise
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§aTorn Pages data read: SUCCESS"
+                ),
+                false
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§1-----------------------------"
+                ),
+                false
         );
 
         return 1;

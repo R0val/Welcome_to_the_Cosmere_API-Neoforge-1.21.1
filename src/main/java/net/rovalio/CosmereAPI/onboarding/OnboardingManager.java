@@ -56,19 +56,10 @@ public class OnboardingManager {
             ResourceLocation planetId
     ) {
 
-        return CosmereRegistries.ORIGIN_REGISTRY
-                .entrySet()
-                .stream()
-                .filter(entry ->
-                        entry.getValue()
-                                .race()
-                                .location()
-                                .equals(planetId)
-                )
-                .map(entry ->
-                        entry.getKey().location()
-                )
-                .toList();
+        return OnboardingRegistryAccess
+                .getSelectableOriginsForPlanet(
+                        planetId
+                );
     }
 
     public static boolean selectRandomOriginForPlanet(
@@ -103,11 +94,13 @@ public class OnboardingManager {
     ) {
 
         List<ResourceLocation> validPlanets =
-                CosmereRegistries.PLANET_REGISTRY
-                        .keySet()
+                OnboardingRegistryAccess
+                        .getSelectablePlanets()
                         .stream()
                         .filter(planetId ->
-                                !getOriginsForPlanet(planetId).isEmpty()
+                                !getOriginsForPlanet(
+                                        planetId
+                                ).isEmpty()
                         )
                         .toList();
 
