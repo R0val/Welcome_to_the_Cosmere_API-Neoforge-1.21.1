@@ -8,11 +8,11 @@ import java.util.List;
 
 public record TornPagesData(
         ResourceLocation planetId,
-        List<ResourceLocation> unlockedEntries
+        List<ResourceLocation> entriesID
 ) {
 
     public TornPagesData {
-        unlockedEntries = List.copyOf(unlockedEntries);
+        entriesID = List.copyOf(entriesID);
     }
 
     public static final Codec<TornPagesData> CODEC =
@@ -25,7 +25,7 @@ public record TornPagesData(
                             ResourceLocation.CODEC
                                     .listOf()
                                     .fieldOf("entries")
-                                    .forGetter(TornPagesData::unlockedEntries)
+                                    .forGetter(TornPagesData::entriesID)
                     ).apply(
                             instance,
                             TornPagesData::new

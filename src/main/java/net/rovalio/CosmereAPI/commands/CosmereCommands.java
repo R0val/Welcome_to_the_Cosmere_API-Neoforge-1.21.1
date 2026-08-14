@@ -531,13 +531,13 @@ public class CosmereCommands {
         boolean originAPlanetCorrect =
                 originAExists
                         && TestDefinition.TEST_PLANET_KEY.equals(
-                        testOriginA.race()
+                        testOriginA.planet()
                 );
 
         boolean originBPlanetCorrect =
                 originBExists
                         && TestDefinition.TEST_PLANET_KEY.equals(
-                        testOriginB.race()
+                        testOriginB.planet()
                 );
 
 
@@ -808,7 +808,7 @@ public class CosmereCommands {
                             "§7- §d"
                                     + originId
                                     + " §7-> §b"
-                                    + origin.race().location()
+                                    + origin.planet().location()
                     ),
                     false
             );
@@ -1050,9 +1050,9 @@ public class CosmereCommands {
 
         boolean entriesCorrect =
                 dataExists
-                        && data.unlockedEntries().size() == 2
-                        && data.unlockedEntries().contains(testEntryA)
-                        && data.unlockedEntries().contains(testEntryB);
+                        && data.entriesID().size() == 2
+                        && data.entriesID().contains(testEntryA)
+                        && data.entriesID().contains(testEntryB);
 
         boolean success =
                 dataExists
@@ -1104,7 +1104,7 @@ public class CosmereCommands {
                         "§7Entries stored: §d"
                                 + (
                                 dataExists
-                                        ? data.unlockedEntries().size()
+                                        ? data.entriesID().size()
                                         : 0
                         )
                                 + " "
@@ -1116,7 +1116,7 @@ public class CosmereCommands {
         if (dataExists) {
 
             for (ResourceLocation entry
-                    : data.unlockedEntries()) {
+                    : data.entriesID()) {
 
                 source.sendSuccess(
                         () -> Component.literal(
@@ -1249,13 +1249,13 @@ public class CosmereCommands {
         source.sendSuccess(
                 () -> Component.literal(
                         "§7Unlocked entries: §d"
-                                + data.unlockedEntries().size()
+                                + data.entriesID().size()
                 ),
                 false
         );
 
         //Shows the unlocked entries
-        if (data.unlockedEntries().isEmpty()) {
+        if (data.entriesID().isEmpty()) {
 
             source.sendSuccess(
                     () -> Component.literal(
@@ -1267,7 +1267,7 @@ public class CosmereCommands {
         } else {
 
             for (ResourceLocation entry
-                    : data.unlockedEntries()) {
+                    : data.entriesID()) {
 
                 source.sendSuccess(
                         () -> Component.literal(

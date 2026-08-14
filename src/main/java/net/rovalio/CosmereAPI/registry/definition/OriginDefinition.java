@@ -5,19 +5,19 @@ import net.minecraft.resources.ResourceKey;
 import java.util.Objects;
 
 public record OriginDefinition(
-        ResourceKey<PlanetDefinition> race,
+        ResourceKey<PlanetDefinition> planet,
         boolean selectableInOnboarding
 ) {
 
     public OriginDefinition(
-            ResourceKey<PlanetDefinition> race
+            ResourceKey<PlanetDefinition> planet
     ) {
-        this(race, true);
+        this(planet, true);
     }
 
     public OriginDefinition {
         Objects.requireNonNull(
-                race,
+                planet,
                 "Origin planet cannot be null"
         );
     }
