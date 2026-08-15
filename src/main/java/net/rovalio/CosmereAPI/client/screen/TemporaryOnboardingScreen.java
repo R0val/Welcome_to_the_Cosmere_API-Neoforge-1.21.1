@@ -74,7 +74,7 @@ public class TemporaryOnboardingScreen extends Screen {
 
         graphics.drawCenteredString(
                 this.font,
-                Component.literal("Origin selection will be implemented next."),
+                Component.literal("Starting scene will be implemented in the future."),
                 this.width / 2,
                 this.height / 2 + 20,
                 0xAAAAAA

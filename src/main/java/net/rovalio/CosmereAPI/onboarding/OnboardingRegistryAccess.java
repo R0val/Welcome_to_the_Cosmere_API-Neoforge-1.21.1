@@ -44,7 +44,7 @@ public final class OnboardingRegistryAccess {
                 )
                 .filter(entry ->
                         entry.getValue()
-                                .race()
+                                .planet()
                                 .location()
                                 .equals(planetId)
                 )

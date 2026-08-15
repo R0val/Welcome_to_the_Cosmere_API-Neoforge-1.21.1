@@ -7,9 +7,6 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 
 public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
 
-    private static final int CURRENT_DATA_VERSION = 2;
-
-    private static final String TAG_DATA_VERSION = "DataVersion";
     private static final String TAG_SPIRITWEB = "Spiritweb";
 
     private static final String TAG_ONBOARDING_COMPLETE =
@@ -72,11 +69,6 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
         tag.putBoolean(
                 TAG_ONBOARDING_COMPLETE,
                 onboardingComplete
-        );
-
-        tag.putInt(
-                TAG_DATA_VERSION,
-                CURRENT_DATA_VERSION
         );
 
         tag.put(

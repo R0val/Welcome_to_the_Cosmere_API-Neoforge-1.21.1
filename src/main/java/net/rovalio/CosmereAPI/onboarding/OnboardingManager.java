@@ -33,7 +33,7 @@ public class OnboardingManager {
         }
 
         ResourceLocation planetId =
-                origin.race().location();
+                origin.planet().location();
 
         PlanetDefinition planet =
                 CosmereRegistries.PLANET_REGISTRY.get(planetId);
