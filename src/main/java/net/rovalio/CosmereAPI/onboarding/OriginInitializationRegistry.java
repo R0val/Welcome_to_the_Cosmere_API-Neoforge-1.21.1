@@ -48,27 +48,29 @@ public final class OriginInitializationRegistry {
     public static boolean hasInitializer(
             ResourceLocation originId
     ) {
-
-        return INITIALIZERS.containsKey(
+        return originId != null
+                && INITIALIZERS.containsKey(
                 originId
         );
     }
 
     //Initialization
-    public static boolean initializeIfPresent(
+    public static boolean initialize(
             ServerPlayer player,
             ResourceLocation planetId,
             ResourceLocation originId
     ) {
+        if (player == null
+                || planetId == null
+                || originId == null) {
+            return false;
+        }
 
         OriginInitializer initializer =
                 INITIALIZERS.get(originId);
 
         if (initializer == null) {
-
-            // An origin is allowed to exist without
-            // having initialization behaviour yet.
-            return true;
+            return false;
         }
 
         return initializer.initialize(

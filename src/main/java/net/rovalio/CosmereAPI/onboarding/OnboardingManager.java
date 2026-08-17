@@ -55,7 +55,7 @@ public final class OnboardingManager {
         //Delegate origin initialization to Addons
         boolean initialized =
                 OriginInitializationRegistry
-                        .initializeIfPresent(
+                        .initialize(
                                 player,
                                 planetId,
                                 originId

@@ -11,4 +11,12 @@ public interface OriginInitializer {
             ResourceLocation planetId,
             ResourceLocation originId
     );
+
+    static OriginInitializer noOp() {
+        return (
+                player,
+                planetId,
+                originId
+        ) -> true;
+    }
 }

@@ -57,13 +57,21 @@ public final class OnboardingRegistryAccess {
                                 .selectableInOnboarding()
                 )
                 .filter(entry ->
+                        OriginInitializationRegistry
+                                .hasInitializer(
+                                        entry.getKey()
+                                                .location()
+                                )
+                )
+                .filter(entry ->
                         entry.getValue()
                                 .planet()
                                 .location()
                                 .equals(planetId)
                 )
                 .map(entry ->
-                        entry.getKey().location()
+                        entry.getKey()
+                                .location()
                 )
                 .sorted(
                         Comparator.comparing(
