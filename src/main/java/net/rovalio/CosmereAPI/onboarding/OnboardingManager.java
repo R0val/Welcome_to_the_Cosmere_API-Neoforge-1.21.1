@@ -15,45 +15,50 @@ public final class OnboardingManager {
 
     }
 
-    public static boolean selectOrigin(
+    public static OnboardingResult selectOrigin(
             ServerPlayer player,
             ResourceLocation originId
     ) {
         if (player == null || originId == null) {
-            return false;
+            return OnboardingResult.INVALID_REQUEST;
         }
 
         CosmerePlayerData data =
                 CosmereAttachments.get(player);
 
-        // Never allows a second election
         if (data.isOnboardingComplete()) {
-            return false;
+            return OnboardingResult.ALREADY_COMPLETE;
         }
 
         OriginDefinition origin =
                 CosmereRegistries.ORIGIN_REGISTRY
                         .get(originId);
 
-        if (origin == null
-                || !origin.selectableInOnboarding()) {
-            return false;
+        if (origin == null) {
+            return OnboardingResult.UNKNOWN_ORIGIN;
+        }
+
+        if (!origin.selectableInOnboarding()) {
+            return OnboardingResult.ORIGIN_NOT_SELECTABLE;
         }
 
         ResourceLocation planetId =
-                origin.planet().location();
+                origin.planet()
+                        .location();
 
         PlanetDefinition planet =
                 CosmereRegistries.PLANET_REGISTRY
                         .get(planetId);
 
-        if (planet == null
-                || !planet.selectableInOnboarding()) {
-            return false;
+        if (planet == null) {
+            return OnboardingResult.UNKNOWN_PLANET;
         }
 
-        //Delegate origin initialization to Addons
-        boolean initialized =
+        if (!planet.selectableInOnboarding()) {
+            return OnboardingResult.PLANET_NOT_SELECTABLE;
+        }
+
+        OnboardingResult initializationResult =
                 OriginInitializationRegistry
                         .initialize(
                                 player,
@@ -61,14 +66,16 @@ public final class OnboardingManager {
                                 originId
                         );
 
-        if (!initialized) {
-            return false;
+        if (!initializationResult.isSuccess()) {
+            return initializationResult;
         }
 
+        data.completeOnboarding(
+                planetId,
+                originId
+        );
 
-        data.completeOnboarding(planetId, originId);
-
-        return true;
+        return OnboardingResult.SUCCESS;
     }
 
     private static List<ResourceLocation> getOriginsForPlanet(
@@ -81,34 +88,38 @@ public final class OnboardingManager {
                 );
     }
 
-    public static boolean selectRandomOriginForPlanet(
+    public static OnboardingResult
+    selectRandomOriginForPlanet(
             ServerPlayer player,
             ResourceLocation planetId
     ) {
-
         if (player == null || planetId == null) {
-            return false;
+            return OnboardingResult.INVALID_REQUEST;
         }
 
         PlanetDefinition planet =
                 CosmereRegistries.PLANET_REGISTRY
                         .get(planetId);
 
-        if (planet == null
-                || !planet.selectableInOnboarding()) {
-            return false;
+        if (planet == null) {
+            return OnboardingResult.UNKNOWN_PLANET;
+        }
+
+        if (!planet.selectableInOnboarding()) {
+            return OnboardingResult.PLANET_NOT_SELECTABLE;
         }
 
         List<ResourceLocation> origins =
                 getOriginsForPlanet(planetId);
 
         if (origins.isEmpty()) {
-            return false;
+            return OnboardingResult.NO_AVAILABLE_ORIGINS;
         }
 
         ResourceLocation selectedOrigin =
                 origins.get(
-                        player.getRandom().nextInt(origins.size())
+                        player.getRandom()
+                                .nextInt(origins.size())
                 );
 
         return selectOrigin(
@@ -117,12 +128,12 @@ public final class OnboardingManager {
         );
     }
 
-    public static boolean selectRandomOriginGlobal(
+    public static OnboardingResult
+    selectRandomOriginGlobal(
             ServerPlayer player
     ) {
-
         if (player == null) {
-            return false;
+            return OnboardingResult.INVALID_REQUEST;
         }
 
         List<ResourceLocation> validPlanets =
@@ -137,13 +148,16 @@ public final class OnboardingManager {
                         .toList();
 
         if (validPlanets.isEmpty()) {
-            return false;
+            return OnboardingResult
+                    .NO_AVAILABLE_PLANETS;
         }
 
         ResourceLocation selectedPlanet =
                 validPlanets.get(
                         player.getRandom()
-                                .nextInt(validPlanets.size())
+                                .nextInt(
+                                        validPlanets.size()
+                                )
                 );
 
         return selectRandomOriginForPlanet(

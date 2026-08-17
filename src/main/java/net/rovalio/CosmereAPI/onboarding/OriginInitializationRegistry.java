@@ -55,7 +55,7 @@ public final class OriginInitializationRegistry {
     }
 
     //Initialization
-    public static boolean initialize(
+    public static OnboardingResult initialize(
             ServerPlayer player,
             ResourceLocation planetId,
             ResourceLocation originId
@@ -63,20 +63,27 @@ public final class OriginInitializationRegistry {
         if (player == null
                 || planetId == null
                 || originId == null) {
-            return false;
+
+            return OnboardingResult.INVALID_REQUEST;
         }
 
         OriginInitializer initializer =
                 INITIALIZERS.get(originId);
 
         if (initializer == null) {
-            return false;
+            return OnboardingResult.MISSING_INITIALIZER;
         }
 
-        return initializer.initialize(
-                player,
-                planetId,
-                originId
-        );
+        OnboardingResult result =
+                initializer.initialize(
+                        player,
+                        planetId,
+                        originId
+                );
+
+        //An addon mustn't return null. This translates null to an error
+        return result != null
+                ? result
+                : OnboardingResult.INTERNAL_ERROR;
     }
 }

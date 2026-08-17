@@ -6,11 +6,13 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.rovalio.CosmereAPI.network.payload.*;
 import net.rovalio.CosmereAPI.onboarding.OnboardingManager;
+import net.rovalio.CosmereAPI.onboarding.OnboardingResult;
 import org.slf4j.Logger;
 
 public final class ServerPayloadHandler {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER =
+            LogUtils.getLogger();
 
     private ServerPayloadHandler() {
     }
@@ -19,7 +21,6 @@ public final class ServerPayloadHandler {
             NetworkPongC2SPayload payload,
             IPayloadContext context
     ) {
-
         LOGGER.info(
                 "[Cosmere API Networking] C2S pong received on thread: {}",
                 Thread.currentThread().getName()
@@ -31,7 +32,6 @@ public final class ServerPayloadHandler {
             SelectOriginC2SPayload payload,
             IPayloadContext context
     ) {
-
         LOGGER.info(
                 "[Cosmere API Onboarding] Origin selection received: {} | Thread: {}",
                 payload.originId(),
@@ -40,17 +40,18 @@ public final class ServerPayloadHandler {
 
         context.enqueueWork(() -> {
 
-            if (!(context.player() instanceof ServerPlayer player)) {
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
                 return;
             }
 
-            boolean success =
+            OnboardingResult result =
                     OnboardingManager.selectOrigin(
                             player,
                             payload.originId()
                     );
 
-            if (success) {
+            if (result.isSuccess()) {
                 PacketDistributor.sendToPlayer(
                         player,
                         OnboardingCompleteS2CPayload.INSTANCE
@@ -58,9 +59,9 @@ public final class ServerPayloadHandler {
             }
 
             LOGGER.info(
-                    "[Cosmere API Onboarding] Origin {} {} for player {}",
+                    "[Cosmere API Onboarding] Origin {} returned {} for player {}",
                     payload.originId(),
-                    success ? "accepted" : "rejected",
+                    result,
                     player.getGameProfile().getName()
             );
 
@@ -80,7 +81,6 @@ public final class ServerPayloadHandler {
             RandomGlobalOriginC2SPayload payload,
             IPayloadContext context
     ) {
-
         LOGGER.info(
                 "[Cosmere API Onboarding] Global random origin requested | Thread: {}",
                 Thread.currentThread().getName()
@@ -88,16 +88,18 @@ public final class ServerPayloadHandler {
 
         context.enqueueWork(() -> {
 
-            if (!(context.player() instanceof ServerPlayer player)) {
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
                 return;
             }
 
-            boolean success =
-                    OnboardingManager.selectRandomOriginGlobal(
-                            player
-                    );
+            OnboardingResult result =
+                    OnboardingManager
+                            .selectRandomOriginGlobal(
+                                    player
+                            );
 
-            if (success) {
+            if (result.isSuccess()) {
                 PacketDistributor.sendToPlayer(
                         player,
                         OnboardingCompleteS2CPayload.INSTANCE
@@ -105,8 +107,8 @@ public final class ServerPayloadHandler {
             }
 
             LOGGER.info(
-                    "[Cosmere API Onboarding] Global random origin selection {} for player {}",
-                    success ? "accepted" : "rejected",
+                    "[Cosmere API Onboarding] Global random origin returned {} for player {}",
+                    result,
                     player.getGameProfile().getName()
             );
 
@@ -126,7 +128,6 @@ public final class ServerPayloadHandler {
             RandomPlanetOriginC2SPayload payload,
             IPayloadContext context
     ) {
-
         LOGGER.info(
                 "[Cosmere API Onboarding] Random origin requested for planet: {} | Thread: {}",
                 payload.planetId(),
@@ -135,17 +136,19 @@ public final class ServerPayloadHandler {
 
         context.enqueueWork(() -> {
 
-            if (!(context.player() instanceof ServerPlayer player)) {
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
                 return;
             }
 
-            boolean success =
-                    OnboardingManager.selectRandomOriginForPlanet(
-                            player,
-                            payload.planetId()
-                    );
+            OnboardingResult result =
+                    OnboardingManager
+                            .selectRandomOriginForPlanet(
+                                    player,
+                                    payload.planetId()
+                            );
 
-            if (success) {
+            if (result.isSuccess()) {
                 PacketDistributor.sendToPlayer(
                         player,
                         OnboardingCompleteS2CPayload.INSTANCE
@@ -153,9 +156,9 @@ public final class ServerPayloadHandler {
             }
 
             LOGGER.info(
-                    "[Cosmere API Onboarding] Random origin selection for planet {} {} for player {}",
+                    "[Cosmere API Onboarding] Random origin for planet {} returned {} for player {}",
                     payload.planetId(),
-                    success ? "accepted" : "rejected",
+                    result,
                     player.getGameProfile().getName()
             );
 

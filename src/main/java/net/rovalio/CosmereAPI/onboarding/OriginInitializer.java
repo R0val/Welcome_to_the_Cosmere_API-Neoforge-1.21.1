@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 @FunctionalInterface
 public interface OriginInitializer {
 
-    boolean initialize(
+    OnboardingResult initialize(
             ServerPlayer player,
             ResourceLocation planetId,
             ResourceLocation originId
@@ -17,6 +17,6 @@ public interface OriginInitializer {
                 player,
                 planetId,
                 originId
-        ) -> true;
+        ) -> OnboardingResult.SUCCESS;
     }
 }
