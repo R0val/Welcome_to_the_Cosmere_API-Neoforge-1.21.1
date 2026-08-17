@@ -10,12 +10,18 @@ import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
 
 import java.util.List;
 
-public class OnboardingManager {
+public final class OnboardingManager {
+    private OnboardingManager (){
+
+    }
 
     public static boolean selectOrigin(
             ServerPlayer player,
             ResourceLocation originId
     ) {
+        if (player == null || originId == null) {
+            return false;
+        }
 
         CosmerePlayerData data =
                 CosmereAttachments.get(player);
@@ -26,9 +32,11 @@ public class OnboardingManager {
         }
 
         OriginDefinition origin =
-                CosmereRegistries.ORIGIN_REGISTRY.get(originId);
+                CosmereRegistries.ORIGIN_REGISTRY
+                        .get(originId);
 
-        if (origin == null) {
+        if (origin == null
+                || !origin.selectableInOnboarding()) {
             return false;
         }
 
@@ -36,9 +44,11 @@ public class OnboardingManager {
                 origin.planet().location();
 
         PlanetDefinition planet =
-                CosmereRegistries.PLANET_REGISTRY.get(planetId);
+                CosmereRegistries.PLANET_REGISTRY
+                        .get(planetId);
 
-        if (planet == null) {
+        if (planet == null
+                || !planet.selectableInOnboarding()) {
             return false;
         }
 
@@ -76,7 +86,16 @@ public class OnboardingManager {
             ResourceLocation planetId
     ) {
 
-        if (!CosmereRegistries.PLANET_REGISTRY.containsKey(planetId)) {
+        if (player == null || planetId == null) {
+            return false;
+        }
+
+        PlanetDefinition planet =
+                CosmereRegistries.PLANET_REGISTRY
+                        .get(planetId);
+
+        if (planet == null
+                || !planet.selectableInOnboarding()) {
             return false;
         }
 
@@ -101,6 +120,10 @@ public class OnboardingManager {
     public static boolean selectRandomOriginGlobal(
             ServerPlayer player
     ) {
+
+        if (player == null) {
+            return false;
+        }
 
         List<ResourceLocation> validPlanets =
                 OnboardingRegistryAccess

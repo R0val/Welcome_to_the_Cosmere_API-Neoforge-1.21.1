@@ -2,6 +2,7 @@ package net.rovalio.CosmereAPI.onboarding;
 
 import net.minecraft.resources.ResourceLocation;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
+import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
 
 import java.util.Comparator;
 import java.util.List;
@@ -34,6 +35,19 @@ public final class OnboardingRegistryAccess {
     public static List<ResourceLocation> getSelectableOriginsForPlanet(
             ResourceLocation planetId
     ) {
+
+        if (planetId == null) {
+            return List.of();
+        }
+
+        PlanetDefinition planet =
+                CosmereRegistries.PLANET_REGISTRY
+                        .get(planetId);
+
+        if (planet == null
+                || !planet.selectableInOnboarding()) {
+            return List.of();
+        }
 
         return CosmereRegistries.ORIGIN_REGISTRY
                 .entrySet()
