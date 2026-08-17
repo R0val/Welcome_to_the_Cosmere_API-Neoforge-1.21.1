@@ -15,12 +15,10 @@ import net.minecraft.nbt.StringTag;
 public class SpiritwebData {
 
     //Sets default universal values
-    public static final double DEFAULT_SIZE = 1.0;
     public static final double DEFAULT_INTEGRITY = 1.0;
     public static final double DEFAULT_INVESTITURE_BEU = 1.0;
     public static final double DEFAULT_FORTUNE = 0.0;
 
-    private static final String TAG_SIZE = "Size";
     private static final String TAG_INTEGRITY = "Integrity";
     private static final String TAG_INVESTITURE = "InvestitureBEU";
     private static final String TAG_FORTUNE = "Fortune";
@@ -29,7 +27,6 @@ public class SpiritwebData {
 
     private static final String TAG_INVESTED_ARTS = "InvestedArts";
 
-    private double size;
     private double integrity;
     private double investitureBEU;
     private double fortune;
@@ -41,12 +38,11 @@ public class SpiritwebData {
 
     //Sets default Spiritweb aspects. These can be modified later by the Cosmere addons
     public SpiritwebData() {
-        this.size = DEFAULT_SIZE;
         this.integrity = DEFAULT_INTEGRITY;
         this.investitureBEU = DEFAULT_INVESTITURE_BEU;
         this.fortune = DEFAULT_FORTUNE;
 
-        //These two are unique for every player
+        //These are unique for every player
         this.identity = new IdentityData();
         this.connections = new ArrayList<>();
 
@@ -54,13 +50,18 @@ public class SpiritwebData {
 
     }
 
-    //Sets size "HP" of the Spiritweb.
-    public double getSize() {
-        return size;
-    }
+    /// Prohibites null, NaN, infinites and double entries
+    private static double requireFinite(
+            String fieldName,
+            double value
+    ) {
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException(
+                    fieldName + " must be finite"
+            );
+        }
 
-    public void setSize(double size) {
-        this.size = Math.max(0.0, size);
+        return value;
     }
 
     //Sets integrity of the Spiritweb. Spiritweb does not "lose hp" but integrity
@@ -69,7 +70,14 @@ public class SpiritwebData {
     }
 
     public void setIntegrity(double integrity) {
-        this.integrity = Math.clamp(integrity, 0.0, 1.0);
+        this.integrity = Math.clamp(
+                requireFinite(
+                        "Spiritweb integrity",
+                        integrity
+                ),
+                0.0,
+                1.0
+        );
     }
 
     ///This is a Cosmere's unit used to quantify how much Investiture and entity has
@@ -80,7 +88,13 @@ public class SpiritwebData {
     }
 
     public void setInvestitureBEU(double investitureBEU) {
-        this.investitureBEU = Math.max(0.0, investitureBEU);
+        this.investitureBEU = Math.max(
+                0.0,
+                requireFinite(
+                        "Investiture BEU",
+                        investitureBEU
+                )
+        );
     }
 
     ///Fortune is useful in the canon to know certain aspects about the future.
@@ -90,7 +104,10 @@ public class SpiritwebData {
     }
 
     public void setFortune(double fortune) {
-        this.fortune = fortune;
+        this.fortune = requireFinite(
+                "Fortune",
+                fortune
+        );
     }
 
     //Gets the UUID from IdentityData.java
@@ -100,23 +117,57 @@ public class SpiritwebData {
 
     //Gets the Connections list from ConnectionData.java
     public List<ConnectionData> getConnections() {
-        return Collections.unmodifiableList(connections);
+        return List.copyOf(connections);
     }
 
-    public void addConnection(ConnectionData connection) {
-        connections.add(connection);
+    public void addConnection(
+            ConnectionData connection
+    ) {
+        Objects.requireNonNull(
+                connection,
+                "Connection cannot be null"
+        );
+
+        setConnection(
+                connection.type(),
+                connection.target(),
+                connection.strength()
+        );
     }
 
-    public void removeConnection(ConnectionData connection) {
-        connections.remove(connection);
+    public void removeConnection(
+            ConnectionData connection
+    ) {
+        Objects.requireNonNull(
+                connection,
+                "Connection cannot be null"
+        );
+
+        connections.removeIf(existing ->
+                existing.type() == connection.type()
+                        && existing.target().equals(
+                        connection.target()
+                )
+        );
     }
 
-    public ConnectionData getConnection(ConnectionType type, String target) {
+    public ConnectionData getConnection(
+            ConnectionType type,
+            String target
+    ) {
+        Objects.requireNonNull(
+                type,
+                "Connection type cannot be null"
+        );
+
+        Objects.requireNonNull(
+                target,
+                "Connection target cannot be null"
+        );
 
         for (ConnectionData connection : connections) {
-            if (connection.getType() == type &&
-                    connection.getTarget().equals(target)) {
-
+            if (connection.type() == type
+                    && connection.target().equals(target)) {
                 return connection;
             }
         }
@@ -124,33 +175,71 @@ public class SpiritwebData {
         return null;
     }
 
-    public void setConnection(ConnectionType type, String target, double strength) {
+    public void setConnection(
+            ConnectionType type,
+            String target,
+            double strength
+    ) {
+        ConnectionData updatedConnection =
+                new ConnectionData(
+                        type,
+                        target,
+                        strength
+                );
 
-        for (ConnectionData connection : connections) {
-            if (connection.getType() == type &&
-                    connection.getTarget().equals(target)) {
+        for (int i = 0; i < connections.size(); i++) {
+            ConnectionData existing =
+                    connections.get(i);
 
-                connection.setStrength(strength);
+            if (existing.type() == type
+                    && existing.target().equals(target)) {
+
+                connections.set(
+                        i,
+                        updatedConnection
+                );
+
                 return;
             }
         }
 
-        connections.add(new ConnectionData(type, target, strength));
+        connections.add(updatedConnection);
     }
 
     public Set<ResourceLocation> getInvestedArts() {
-        return Collections.unmodifiableSet(investedArts);
+        return Set.copyOf(investedArts);
     }
 
-    public boolean hasInvestedArt(ResourceLocation art) {
+    public boolean hasInvestedArt(
+            ResourceLocation art
+    ) {
+        Objects.requireNonNull(
+                art,
+                "Invested Art ID cannot be null"
+        );
+
         return investedArts.contains(art);
     }
 
-    public void grantInvestedArt(ResourceLocation art) {
+    public void grantInvestedArt(
+            ResourceLocation art
+    ) {
+        Objects.requireNonNull(
+                art,
+                "Invested Art ID cannot be null"
+        );
+
         investedArts.add(art);
     }
 
-    public void revokeInvestedArt(ResourceLocation art) {
+    public void revokeInvestedArt(
+            ResourceLocation art
+    ) {
+        Objects.requireNonNull(
+                art,
+                "Invested Art ID cannot be null"
+        );
+
         investedArts.remove(art);
     }
 
@@ -159,7 +248,6 @@ public class SpiritwebData {
 
         CompoundTag tag = new CompoundTag();
 
-        tag.putDouble(TAG_SIZE, size);
         tag.putDouble(TAG_INTEGRITY, integrity);
         tag.putDouble(TAG_INVESTITURE, investitureBEU);
         tag.putDouble(TAG_FORTUNE, fortune);
@@ -174,42 +262,81 @@ public class SpiritwebData {
 
         tag.put(TAG_CONNECTIONS, connectionsTag);
 
-        ListTag investedArtsTag = new ListTag();
+        ListTag investedArtsTag =
+                new ListTag();
 
-        for (ResourceLocation art : investedArts) {
-            investedArtsTag.add(StringTag.valueOf(art.toString()));
+        List<ResourceLocation> sortedInvestedArts =
+                investedArts.stream()
+                        .sorted(
+                                Comparator.comparing(
+                                        ResourceLocation::toString
+                                )
+                        )
+                        .toList();
+
+        for (ResourceLocation art : sortedInvestedArts) {
+            investedArtsTag.add(
+                    StringTag.valueOf(
+                            art.toString()
+                    )
+            );
         }
 
-        tag.put(TAG_INVESTED_ARTS, investedArtsTag);
+        tag.put(
+                TAG_INVESTED_ARTS,
+                investedArtsTag
+        );
 
         return tag;
     }
 
     public void loadNBT(CompoundTag tag) {
 
+        integrity = DEFAULT_INTEGRITY;
+        investitureBEU = DEFAULT_INVESTITURE_BEU;
+        fortune = DEFAULT_FORTUNE;
+
+        connections.clear();
+        investedArts.clear();
+
         //checks if Player has a valor for every Spiritweb aspect. If not, this constructor gives the default valor
 
-        if (tag.contains(TAG_SIZE)) {
-            setSize(tag.getDouble(TAG_SIZE));
-        }
-
         if (tag.contains(TAG_INTEGRITY)) {
-            setIntegrity(tag.getDouble(TAG_INTEGRITY));
+            double loadedIntegrity =
+                    tag.getDouble(TAG_INTEGRITY);
+
+            if (Double.isFinite(loadedIntegrity)) {
+                setIntegrity(loadedIntegrity);
+            }
         }
 
         if (tag.contains(TAG_INVESTITURE)) {
-            setInvestitureBEU(tag.getDouble(TAG_INVESTITURE));
+            double loadedInvestiture =
+                    tag.getDouble(TAG_INVESTITURE);
+
+            if (Double.isFinite(loadedInvestiture)) {
+                setInvestitureBEU(loadedInvestiture);
+            }
         }
 
         if (tag.contains(TAG_FORTUNE)) {
-            setFortune(tag.getDouble(TAG_FORTUNE));
+            double loadedFortune =
+                    tag.getDouble(TAG_FORTUNE);
+
+            if (Double.isFinite(loadedFortune)) {
+                setFortune(loadedFortune);
+            }
         }
 
-        if (tag.contains(TAG_IDENTITY, Tag.TAG_COMPOUND)) {
-            identity.loadNBT(tag.getCompound(TAG_IDENTITY));
-        }
+        CompoundTag identityTag =
+                tag.contains(
+                        TAG_IDENTITY,
+                        Tag.TAG_COMPOUND
+                )
+                        ? tag.getCompound(TAG_IDENTITY)
+                        : new CompoundTag();
 
-        connections.clear();
+        identity.loadNBT(identityTag);
 
         if (tag.contains(TAG_CONNECTIONS, Tag.TAG_LIST)) {
 
@@ -225,12 +352,10 @@ public class SpiritwebData {
                         ConnectionData.loadNBT(connectionTag);
 
                 if (connection != null) {
-                    connections.add(connection);
+                    addConnection(connection);
                 }
             }
         }
-
-        investedArts.clear();
 
         if (tag.contains(TAG_INVESTED_ARTS, Tag.TAG_LIST)) {
 

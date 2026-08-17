@@ -70,22 +70,6 @@ public class CosmereCommands {
 
                                 .then(Commands.literal("spiritweb")
 
-
-                                        .then(Commands.literal("size")
-                                                .then(Commands.argument("targets", EntityArgument.players())
-                                                        .then(Commands.argument("value", DoubleArgumentType.doubleArg(0.0))
-                                                                .executes(context ->
-                                                                        setSize(
-                                                                                context,
-                                                                                EntityArgument.getPlayers(context, "targets"),
-                                                                                DoubleArgumentType.getDouble(context, "value")
-                                                                        )
-                                                                )
-                                                        )
-                                                )
-                                        )
-
-
                                         .then(Commands.literal("integrity")
                                                 .then(Commands.argument("targets", EntityArgument.players())
                                                         .then(Commands.argument("value", DoubleArgumentType.doubleArg(0.0, 100.0))
@@ -214,20 +198,10 @@ public class CosmereCommands {
                                         )
                                 )
 
-                                .then(Commands.literal("complete")
-                                        .executes(context ->
-                                                setOnboarding(
-                                                        context.getSource(),
-                                                        true
-                                                )
-                                        )
-                                )
-
                                 .then(Commands.literal("reset")
                                         .executes(context ->
-                                                setOnboarding(
-                                                        context.getSource(),
-                                                        false
+                                                resetOnboarding(
+                                                        context.getSource()
                                                 )
                                         )
                                 )
@@ -272,15 +246,6 @@ public class CosmereCommands {
 
         player.sendSystemMessage(
                 Component.literal("§1------ §6COSMERE STATE §1------")
-        );
-
-        player.sendSystemMessage(
-                Component.literal(
-                        String.format(
-                                "§7Spiritweb Size: §b%.2f",
-                                spiritweb.getSize()
-                        )
-                )
         );
 
         player.sendSystemMessage(
@@ -334,30 +299,6 @@ public class CosmereCommands {
         return 1;
     }
 
-    //Changes Spiritweb size
-    private static int setSize(
-            CommandContext<CommandSourceStack> context,
-            Collection<ServerPlayer> targets,
-            double value
-    ) {
-
-        for (ServerPlayer player : targets) {
-
-            CosmerePlayerData data = CosmereAttachments.get(player);
-
-            data.getSpiritweb().setSize(value);
-
-            context.getSource().sendSuccess(
-                    () -> Component.literal(
-                            "Spiritweb size set to " + value
-                                    + " for " + player
-                    ),
-                    true
-            );
-        }
-
-        return targets.size();
-    }
 
     //Changes Spiritweb integrity
     private static int setIntegrity(
@@ -444,8 +385,7 @@ public class CosmereCommands {
         for (ServerPlayer player : targets) {
 
             CosmerePlayerData data = CosmereAttachments.get(player);
-
-            data.getSpiritweb().setSize(SpiritwebData.DEFAULT_SIZE);
+;
             data.getSpiritweb().setIntegrity(SpiritwebData.DEFAULT_INTEGRITY);
             data.getSpiritweb().setInvestitureBEU(SpiritwebData.DEFAULT_INVESTITURE_BEU);
             data.getSpiritweb().setFortune(SpiritwebData.DEFAULT_FORTUNE);
@@ -882,32 +822,30 @@ public class CosmereCommands {
         return 1;
     }
 
-    private static int setOnboarding(
-            CommandSourceStack source,
-            boolean value
+    private static int resetOnboarding(
+            CommandSourceStack source
     ) {
+        if (!(source.getEntity()
+                instanceof ServerPlayer player)) {
 
-        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(
+                    Component.literal(
+                            "Este comando debe ser ejecutado por un jugador."
+                    )
+            );
+
             return 0;
         }
 
         CosmerePlayerData data =
                 CosmereAttachments.get(player);
 
-        data.setOnboardingComplete(value);
-
-        // Reset origin data when onboarding is reset
-        if (!value) {
-            data.clearOriginSelection();
-        }
+        data.resetOnboarding();
 
         source.sendSuccess(
                 () -> Component.literal(
-                        "§7Onboarding complete set to: "
-                                + (value ? "§atrue" : "§cfalse")
-                                + (!value
-                                ? " §7| Origin selection cleared."
-                                : "")
+                        "§7Onboarding reset. "
+                                + "Origin selection cleared."
                 ),
                 false
         );

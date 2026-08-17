@@ -2,37 +2,42 @@ package net.rovalio.CosmereAPI.player;
 
 import net.minecraft.nbt.CompoundTag;
 
-public class ConnectionData {
+import java.util.Objects;
+
+public record ConnectionData(
+        ConnectionType type,
+        String target,
+        double strength
+) {
 
     private static final String TAG_TYPE = "Type";
     private static final String TAG_TARGET = "Target";
     private static final String TAG_STRENGTH = "Strength";
 
-    private final ConnectionType type;
-    private final String target;
-    private double strength;
+    public ConnectionData {
+        Objects.requireNonNull(
+                type,
+                "Connection type cannot be null"
+        );
 
-    //Sets the type, target and strength of the Connections between Player and its enviroment
-    public ConnectionData(ConnectionType type, String target, double strength) {
-        this.type = type;
-        this.target = target;
-        this.strength = strength;
-    }
+        Objects.requireNonNull(
+                target,
+                "Connection target cannot be null"
+        );
 
-    public ConnectionType getType() {
-        return type;
-    }
+        if (target.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Connection target cannot be blank"
+            );
+        }
 
-    public String getTarget() {
-        return target;
-    }
+        if (!Double.isFinite(strength)) {
+            throw new IllegalArgumentException(
+                    "Connection strength must be finite"
+            );
+        }
 
-    public double getStrength() {
-        return strength;
-    }
-
-    public void setStrength(double strength) {
-        this.strength = strength;
+        strength = Math.max(0.0, strength);
     }
 
     public CompoundTag saveNBT() {
@@ -45,11 +50,14 @@ public class ConnectionData {
         return tag;
     }
 
-    public static ConnectionData loadNBT(CompoundTag tag) {
-
+    public static ConnectionData loadNBT(
+            CompoundTag tag
+    ) {
         try {
             ConnectionType type =
-                    ConnectionType.valueOf(tag.getString(TAG_TYPE));
+                    ConnectionType.valueOf(
+                            tag.getString(TAG_TYPE)
+                    );
 
             String target =
                     tag.getString(TAG_TARGET);
@@ -57,7 +65,11 @@ public class ConnectionData {
             double strength =
                     tag.getDouble(TAG_STRENGTH);
 
-            return new ConnectionData(type, target, strength);
+            return new ConnectionData(
+                    type,
+                    target,
+                    strength
+            );
 
         } catch (IllegalArgumentException exception) {
             return null;

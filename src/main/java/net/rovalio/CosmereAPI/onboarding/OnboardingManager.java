@@ -55,12 +55,8 @@ public class OnboardingManager {
             return false;
         }
 
-        data.setOriginSelection(
-                planetId,
-                originId
-        );
 
-        data.setOnboardingComplete(true);
+        data.completeOnboarding(planetId, originId);
 
         return true;
     }

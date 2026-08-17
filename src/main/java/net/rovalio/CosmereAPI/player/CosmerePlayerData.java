@@ -2,8 +2,11 @@ package net.rovalio.CosmereAPI.player;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.util.INBTSerializable;
+
+import java.util.Objects;
 
 public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
 
@@ -27,8 +30,29 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
         return onboardingComplete;
     }
 
-    public void setOnboardingComplete(boolean onboardingComplete) {
-        this.onboardingComplete = onboardingComplete;
+    public void completeOnboarding(
+            ResourceLocation originPlanetId,
+            ResourceLocation originId
+    ) {
+        this.originPlanetId =
+                Objects.requireNonNull(
+                        originPlanetId,
+                        "Origin planet ID cannot be null"
+                );
+
+        this.originId =
+                Objects.requireNonNull(
+                        originId,
+                        "Origin ID cannot be null"
+                );
+
+        this.onboardingComplete = true;
+    }
+
+    public void resetOnboarding() {
+        this.onboardingComplete = false;
+        this.originPlanetId = null;
+        this.originId = null;
     }
 
     //Creation and registry of the Player's Spiritweb
@@ -48,18 +72,9 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
         return originId;
     }
 
-    public void setOriginSelection(
-            ResourceLocation originPlanetId,
-            ResourceLocation originId
-    ) {
-        this.originPlanetId = originPlanetId;
-        this.originId = originId;
-    }
 
-    public void clearOriginSelection() {
-        this.originPlanetId = null;
-        this.originId = null;
-    }
+
+
 
     @Override
     public CompoundTag serializeNBT(HolderLookup. Provider provider) {
@@ -98,29 +113,56 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
             HolderLookup.Provider provider,
             CompoundTag tag
     ) {
-        if (tag.contains(TAG_SPIRITWEB)) {
+        if (tag.contains(
+                TAG_SPIRITWEB,
+                Tag.TAG_COMPOUND
+        )) {
             spiritweb.loadNBT(
                     tag.getCompound(TAG_SPIRITWEB)
             );
+        } else {
+            spiritweb.loadNBT(
+                    new CompoundTag()
+            );
         }
-        onboardingComplete =
-                tag.getBoolean(TAG_ONBOARDING_COMPLETE);
 
-        originPlanetId = null;
-        originId = null;
+        boolean loadedOnboardingComplete =
+                tag.getBoolean(
+                        TAG_ONBOARDING_COMPLETE
+                );
+
+        ResourceLocation loadedPlanetId = null;
+        ResourceLocation loadedOriginId = null;
 
         if (tag.contains(TAG_ORIGIN_PLANET)) {
-            originPlanetId =
+            loadedPlanetId =
                     ResourceLocation.tryParse(
-                            tag.getString(TAG_ORIGIN_PLANET)
+                            tag.getString(
+                                    TAG_ORIGIN_PLANET
+                            )
                     );
         }
 
         if (tag.contains(TAG_ORIGIN)) {
-            originId =
+            loadedOriginId =
                     ResourceLocation.tryParse(
-                            tag.getString(TAG_ORIGIN)
+                            tag.getString(
+                                    TAG_ORIGIN
+                            )
                     );
+        }
+
+        if (loadedOnboardingComplete
+                && loadedPlanetId != null
+                && loadedOriginId != null) {
+
+            completeOnboarding(
+                    loadedPlanetId,
+                    loadedOriginId
+            );
+
+        } else {
+            resetOnboarding();
         }
     }
 }
