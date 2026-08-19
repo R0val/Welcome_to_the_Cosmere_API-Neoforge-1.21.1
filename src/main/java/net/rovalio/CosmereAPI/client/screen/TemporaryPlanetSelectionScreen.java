@@ -3,7 +3,6 @@ package net.rovalio.CosmereAPI.client.screen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -12,7 +11,7 @@ import net.rovalio.CosmereAPI.onboarding.OnboardingRegistryAccess;
 
 import java.util.List;
 
-public class TemporaryPlanetSelectionScreen extends Screen {
+public class TemporaryPlanetSelectionScreen extends AbstractOnboardingScreen {
 
     private List<ResourceLocation> planets;
 
@@ -35,9 +34,7 @@ public class TemporaryPlanetSelectionScreen extends Screen {
                 this.height / 2
                         - ((planets.size() + 1) * spacing) / 2;
 
-        // =====================================================
         // PLANETS
-        // =====================================================
 
         for (int i = 0; i < planets.size(); i++) {
 
@@ -66,9 +63,7 @@ public class TemporaryPlanetSelectionScreen extends Screen {
             );
         }
 
-        // =====================================================
         // GLOBAL RANDOM
-        // =====================================================
 
         Button randomButton =
                 Button.builder(
@@ -133,6 +128,10 @@ public class TemporaryPlanetSelectionScreen extends Screen {
                     0xFF5555
             );
         }
+
+        this.renderOnboardingResult(
+                graphics
+        );
     }
 
     private static String formatName(
@@ -163,10 +162,5 @@ public class TemporaryPlanetSelectionScreen extends Screen {
         }
 
         return result.toString();
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }

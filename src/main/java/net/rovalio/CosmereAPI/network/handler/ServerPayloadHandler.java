@@ -46,17 +46,19 @@ public final class ServerPayloadHandler {
             }
 
             OnboardingResult result =
-                    OnboardingManager.selectOrigin(
+                    executeSafely(
+                            () -> OnboardingManager.selectOrigin(
+                                    player,
+                                    payload.originId()
+                            ),
                             player,
-                            payload.originId()
+                            "Specific origin selection"
                     );
 
-            if (result.isSuccess()) {
-                PacketDistributor.sendToPlayer(
-                        player,
-                        OnboardingCompleteS2CPayload.INSTANCE
-                );
-            }
+            sendOnboardingResult(
+                    player,
+                    result
+            );
 
             LOGGER.info(
                     "[Cosmere API Onboarding] Origin {} returned {} for player {}",
@@ -94,17 +96,19 @@ public final class ServerPayloadHandler {
             }
 
             OnboardingResult result =
-                    OnboardingManager
-                            .selectRandomOriginGlobal(
-                                    player
-                            );
+                    executeSafely(
+                            () -> OnboardingManager
+                                    .selectRandomOriginGlobal(
+                                            player
+                                    ),
+                            player,
+                            "Global random origin selection"
+                    );
 
-            if (result.isSuccess()) {
-                PacketDistributor.sendToPlayer(
-                        player,
-                        OnboardingCompleteS2CPayload.INSTANCE
-                );
-            }
+            sendOnboardingResult(
+                    player,
+                    result
+            );
 
             LOGGER.info(
                     "[Cosmere API Onboarding] Global random origin returned {} for player {}",
@@ -142,18 +146,20 @@ public final class ServerPayloadHandler {
             }
 
             OnboardingResult result =
-                    OnboardingManager
-                            .selectRandomOriginForPlanet(
-                                    player,
-                                    payload.planetId()
-                            );
+                    executeSafely(
+                            () -> OnboardingManager
+                                    .selectRandomOriginForPlanet(
+                                            player,
+                                            payload.planetId()
+                                    ),
+                            player,
+                            "Planet random origin selection"
+                    );
 
-            if (result.isSuccess()) {
-                PacketDistributor.sendToPlayer(
-                        player,
-                        OnboardingCompleteS2CPayload.INSTANCE
-                );
-            }
+            sendOnboardingResult(
+                    player,
+                    result
+            );
 
             LOGGER.info(
                     "[Cosmere API Onboarding] Random origin for planet {} returned {} for player {}",
@@ -171,5 +177,44 @@ public final class ServerPayloadHandler {
 
             return null;
         });
+    }
+
+    private static OnboardingResult executeSafely(
+            java.util.function.Supplier<
+                    OnboardingResult
+                    > operation,
+            ServerPlayer player,
+            String operationName
+    ) {
+        try {
+            OnboardingResult result =
+                    operation.get();
+
+            return result != null
+                    ? result
+                    : OnboardingResult.INTERNAL_ERROR;
+
+        } catch (RuntimeException exception) {
+            LOGGER.error(
+                    "[Cosmere API Onboarding] {} failed for player {}",
+                    operationName,
+                    player.getGameProfile().getName(),
+                    exception
+            );
+
+            return OnboardingResult.INTERNAL_ERROR;
+        }
+    }
+
+    private static void sendOnboardingResult(
+            ServerPlayer player,
+            OnboardingResult result
+    ) {
+        PacketDistributor.sendToPlayer(
+                player,
+                new OnboardingResultS2CPayload(
+                        result
+                )
+        );
     }
 }

@@ -1,4 +1,18 @@
 {
+  "message.cosmere_api.onboarding.success": "Origin selected.",
+  "message.cosmere_api.onboarding.invalid_request": "The onboarding request was invalid.",
+  "message.cosmere_api.onboarding.already_complete": "Your origin has already been selected.",
+  "message.cosmere_api.onboarding.unknown_origin": "That origin does not exist.",
+  "message.cosmere_api.onboarding.origin_not_selectable": "That origin cannot be selected.",
+  "message.cosmere_api.onboarding.unknown_planet": "That planet does not exist.",
+  "message.cosmere_api.onboarding.planet_not_selectable": "That planet cannot be selected.",
+  "message.cosmere_api.onboarding.missing_initializer": "That origin has not been configured correctly.",
+  "message.cosmere_api.onboarding.no_available_planets": "No origin planets are available.",
+  "message.cosmere_api.onboarding.no_available_origins": "No origins are available for that planet.",
+  "message.cosmere_api.onboarding.initialization_failed": "Your origin could not be initialized.",
+  "message.cosmere_api.onboarding.reward_delivery_failed": "Your starting items could not be delivered.",
+  "message.cosmere_api.onboarding.internal_error": "An internal onboarding error occurred.",
+
   "item.cosmere_api.torn_pages": "Torn pages",
   "item.cosmere_api.notes_of_a_scholar": "Notes of a scholar",
   "item.cosmere_api.arcanum_unbounded": "Arcanum Unbounded"

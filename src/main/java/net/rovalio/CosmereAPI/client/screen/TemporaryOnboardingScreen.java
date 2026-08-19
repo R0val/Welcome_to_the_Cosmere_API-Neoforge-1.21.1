@@ -3,10 +3,9 @@ package net.rovalio.CosmereAPI.client.screen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public class TemporaryOnboardingScreen extends Screen {
+public class TemporaryOnboardingScreen extends AbstractOnboardingScreen {
 
     public TemporaryOnboardingScreen() {
         super(Component.literal("Cosmere Onboarding"));
@@ -79,10 +78,9 @@ public class TemporaryOnboardingScreen extends Screen {
                 this.height / 2 + 20,
                 0xAAAAAA
         );
-    }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+        this.renderOnboardingResult(
+                graphics
+        );
     }
 }

@@ -2,7 +2,6 @@ package net.rovalio.CosmereAPI.client.screen;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -12,7 +11,7 @@ import net.rovalio.CosmereAPI.onboarding.OnboardingRegistryAccess;
 
 import java.util.List;
 
-public class TemporaryOriginSelectionScreen extends Screen {
+public class TemporaryOriginSelectionScreen extends AbstractOnboardingScreen {
 
     private final ResourceLocation planetId;
 
@@ -45,9 +44,7 @@ public class TemporaryOriginSelectionScreen extends Screen {
                 this.height / 2
                         - ((origins.size() + 2) * spacing) / 2;
 
-        // =====================================================
         // ORIGINS
-        // =====================================================
 
         for (int i = 0; i < origins.size(); i++) {
 
@@ -76,9 +73,7 @@ public class TemporaryOriginSelectionScreen extends Screen {
             );
         }
 
-        // =====================================================
         // RANDOM WITHIN PLANET
-        // =====================================================
 
         Button randomButton =
                 Button.builder(
@@ -102,10 +97,7 @@ public class TemporaryOriginSelectionScreen extends Screen {
 
         this.addRenderableWidget(randomButton);
 
-
-        // =====================================================
         // BACK
-        // =====================================================
 
         this.addRenderableWidget(
                 Button.builder(
@@ -170,6 +162,10 @@ public class TemporaryOriginSelectionScreen extends Screen {
                     0xFF5555
             );
         }
+
+        this.renderOnboardingResult(
+                graphics
+        );
     }
 
     private static String formatName(
@@ -200,10 +196,5 @@ public class TemporaryOriginSelectionScreen extends Screen {
         }
 
         return result.toString();
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }

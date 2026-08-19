@@ -21,6 +21,12 @@ public final class OnboardingRegistryAccess {
                         entry.getValue()
                                 .selectableInOnboarding()
                 )
+                .filter(entry ->
+                        !getSelectableOriginsForPlanet(
+                                entry.getKey()
+                                        .location()
+                        ).isEmpty()
+                )
                 .map(entry ->
                         entry.getKey().location()
                 )
@@ -79,5 +85,9 @@ public final class OnboardingRegistryAccess {
                         )
                 )
                 .toList();
+    }
+
+    public static boolean hasAvailableOrigins() {
+        return !getSelectablePlanets().isEmpty();
     }
 }

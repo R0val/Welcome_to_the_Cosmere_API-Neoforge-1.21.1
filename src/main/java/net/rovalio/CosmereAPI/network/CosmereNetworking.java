@@ -9,7 +9,7 @@ import net.rovalio.CosmereAPI.network.payload.*;
 
 public final class CosmereNetworking {
 
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "2";
 
     private CosmereNetworking() {
     }
@@ -62,9 +62,9 @@ public final class CosmereNetworking {
         );
 
         registrar.playToClient(
-                OnboardingCompleteS2CPayload.TYPE,
-                OnboardingCompleteS2CPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleOnboardingComplete
+                OnboardingResultS2CPayload.TYPE,
+                OnboardingResultS2CPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleOnboardingResult
         );
     }
 }
