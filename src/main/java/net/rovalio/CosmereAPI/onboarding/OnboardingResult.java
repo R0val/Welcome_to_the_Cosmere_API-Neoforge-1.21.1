@@ -13,6 +13,9 @@ public enum OnboardingResult {
     UNKNOWN_PLANET(false),
     PLANET_NOT_SELECTABLE(false),
 
+    ORIGIN_PLANET_MISMATCH(false),
+    ORIGIN_ALREADY_SELECTED(false),
+
     MISSING_INITIALIZER(false),
     NO_AVAILABLE_PLANETS(false),
     NO_AVAILABLE_ORIGINS(false),

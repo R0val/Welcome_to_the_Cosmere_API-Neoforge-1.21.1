@@ -6,6 +6,8 @@
   "message.cosmere_api.onboarding.origin_not_selectable": "That origin cannot be selected.",
   "message.cosmere_api.onboarding.unknown_planet": "That planet does not exist.",
   "message.cosmere_api.onboarding.planet_not_selectable": "That planet cannot be selected.",
+  "message.cosmere_api.onboarding.origin_planet_mismatch": "That origin does not belong to the selected planet.",
+  "message.cosmere_api.onboarding.origin_already_selected": "That player already has the selected origin.",
   "message.cosmere_api.onboarding.missing_initializer": "That origin has not been configured correctly.",
   "message.cosmere_api.onboarding.no_available_planets": "No origin planets are available.",
   "message.cosmere_api.onboarding.no_available_origins": "No origins are available for that planet.",

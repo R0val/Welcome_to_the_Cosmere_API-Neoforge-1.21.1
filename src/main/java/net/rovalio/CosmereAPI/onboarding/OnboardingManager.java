@@ -165,4 +165,83 @@ public final class OnboardingManager {
                 selectedPlanet
         );
     }
+
+    public static OnboardingResult changeOrigin(
+            ServerPlayer player,
+            ResourceLocation planetId,
+            ResourceLocation originId
+    ) {
+        if (player == null
+                || planetId == null
+                || originId == null) {
+
+            return OnboardingResult.INVALID_REQUEST;
+        }
+
+        PlanetDefinition planet =
+                CosmereRegistries.PLANET_REGISTRY
+                        .get(planetId);
+
+        if (planet == null) {
+            return OnboardingResult.UNKNOWN_PLANET;
+        }
+
+        if (!planet.selectableInOnboarding()) {
+            return OnboardingResult.PLANET_NOT_SELECTABLE;
+        }
+
+        OriginDefinition origin =
+                CosmereRegistries.ORIGIN_REGISTRY
+                        .get(originId);
+
+        if (origin == null) {
+            return OnboardingResult.UNKNOWN_ORIGIN;
+        }
+
+        if (!origin.selectableInOnboarding()) {
+            return OnboardingResult.ORIGIN_NOT_SELECTABLE;
+        }
+
+        ResourceLocation actualPlanetId =
+                origin.planet()
+                        .location();
+
+        if (!planetId.equals(actualPlanetId)) {
+            return OnboardingResult.ORIGIN_PLANET_MISMATCH;
+        }
+
+        CosmerePlayerData data =
+                CosmereAttachments.get(player);
+
+        // Avoids reapplying the origin the player already has
+        if (planetId.equals(data.getOriginPlanetId())
+                && originId.equals(data.getOriginId())) {
+
+            return OnboardingResult.ORIGIN_ALREADY_SELECTED;
+        }
+
+        //Initializes the new origin before modifyingthe player's persistent origin selection.
+        //If initialization fails, the stored planet and origin remain unchanged.
+        OnboardingResult initializationResult =
+                OriginInitializationRegistry.initialize(
+                        player,
+                        planetId,
+                        originId
+                );
+
+        if (!initializationResult.isSuccess()) {
+            return initializationResult;
+        }
+
+        /*
+         * Overwrites the previous planet and origin.
+         * onboardingComplete remains true.
+         */
+        data.completeOnboarding(
+                planetId,
+                originId
+        );
+
+        return OnboardingResult.SUCCESS;
+    }
 }
