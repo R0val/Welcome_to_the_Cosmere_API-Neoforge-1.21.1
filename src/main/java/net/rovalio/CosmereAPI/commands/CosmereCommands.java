@@ -10,24 +10,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.rovalio.CosmereAPI.CosmereAPI;
 import net.rovalio.CosmereAPI.data.CosmereDataComponents;
 import net.rovalio.CosmereAPI.data.TornPagesData;
 import net.rovalio.CosmereAPI.item.CosmereItems;
-import net.rovalio.CosmereAPI.item.custom.TornPagesItem;
-import net.rovalio.CosmereAPI.network.payload.NetworkPingS2CPayload;
 import net.rovalio.CosmereAPI.player.*;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
-import net.rovalio.CosmereAPI.registry.definition.LocationDefinition;
 import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
-import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
-import net.rovalio.CosmereAPI.registry.definition.ShardDefinition;
-import net.rovalio.CosmereAPI.registry.test.TestDefinition;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Locale;
 
 public class CosmereCommands {
@@ -156,20 +146,7 @@ public class CosmereCommands {
                 .then(Commands.literal("test")
                         .then(Commands.literal("network")
 
-                                .then(Commands.literal("ping")
 
-                                        .executes(context ->
-                                                networkPing(
-                                                        context.getSource()
-                                                )
-                                        )
-                                )
-                        )
-
-                        .then(Commands.literal("registrytest")
-                                .executes(context ->
-                                        showRegistryTest(context.getSource())
-                                )
                         )
 
                         .then(Commands.literal("show")
@@ -179,7 +156,7 @@ public class CosmereCommands {
                                         )
                                 )
 
-                                .then(Commands.literal("heldtornpagesdata")
+                                .then(Commands.literal("tornpagesdata")
                                         .executes(context ->
                                                 showHeldTornPages(
                                                         context.getSource()
@@ -209,14 +186,7 @@ public class CosmereCommands {
 
                         .then(Commands.literal("give")
 
-                                .then(Commands.literal("tornpages")
 
-                                        .executes(context ->
-                                                giveTestTornPages(
-                                                        context.getSource()
-                                                )
-                                        )
-                                )
                         )
 
                 )
@@ -401,304 +371,6 @@ public class CosmereCommands {
         return 1;
     }
 
-    private static int showRegistryTest(CommandSourceStack source) {
-
-        // =========================================================
-        // GET REGISTERED DEFINITIONS
-        // =========================================================
-
-        PlanetDefinition testPlanet =
-                CosmereRegistries.PLANET_REGISTRY.get(
-                        TestDefinition.TEST_PLANET.getId()
-                );
-
-        OriginDefinition testOriginA =
-                CosmereRegistries.ORIGIN_REGISTRY.get(
-                        TestDefinition.TEST_ORIGIN_A.getId()
-                );
-
-        OriginDefinition testOriginB =
-                CosmereRegistries.ORIGIN_REGISTRY.get(
-                        TestDefinition.TEST_ORIGIN_B.getId()
-                );
-
-        ShardDefinition testShard =
-                CosmereRegistries.SHARD_REGISTRY.get(
-                        TestDefinition.TEST_SHARD.getId()
-                );
-
-        LocationDefinition testLocation =
-                CosmereRegistries.LOCATION_REGISTRY.get(
-                        TestDefinition.TEST_LOCATION.getId()
-                );
-
-
-        // =========================================================
-        // CHECK EXISTENCE
-        // =========================================================
-
-        boolean planetExists =
-                testPlanet != null;
-
-        boolean originAExists =
-                testOriginA != null;
-
-        boolean originBExists =
-                testOriginB != null;
-
-        boolean shardExists =
-                testShard != null;
-
-        boolean locationExists =
-                testLocation != null;
-
-
-        // =========================================================
-        // CHECK PLANET DIMENSION
-        // =========================================================
-
-        boolean planetDimensionCorrect =
-                planetExists
-                        && Level.OVERWORLD.equals(
-                        testPlanet.dimension()
-                );
-
-
-        // =========================================================
-        // CHECK ORIGIN -> PLANET RELATIONSHIPS
-        // =========================================================
-
-        boolean originAPlanetCorrect =
-                originAExists
-                        && TestDefinition.TEST_PLANET_KEY.equals(
-                        testOriginA.planet()
-                );
-
-        boolean originBPlanetCorrect =
-                originBExists
-                        && TestDefinition.TEST_PLANET_KEY.equals(
-                        testOriginB.planet()
-                );
-
-
-        // =========================================================
-        // CHECK CONNECTION TARGET VALIDATION
-        // =========================================================
-
-        boolean registeredShardAccepted =
-                ConnectionTargetValidator.isValid(
-                        ConnectionType.SHARD,
-                        TestDefinition.TEST_SHARD.getId()
-                );
-
-        boolean registeredLocationAccepted =
-                ConnectionTargetValidator.isValid(
-                        ConnectionType.LOCATION,
-                        TestDefinition.TEST_LOCATION.getId()
-                );
-
-
-        // =========================================================
-        // CHECK INVALID TARGET REJECTION
-        // =========================================================
-
-        ResourceLocation invalidShardId =
-                ResourceLocation.fromNamespaceAndPath(
-                        CosmereAPI.MOD_ID,
-                        "invalid_test_shard"
-                );
-
-        ResourceLocation invalidLocationId =
-                ResourceLocation.fromNamespaceAndPath(
-                        CosmereAPI.MOD_ID,
-                        "invalid_test_location"
-                );
-
-        boolean invalidShardRejected =
-                !ConnectionTargetValidator.isValid(
-                        ConnectionType.SHARD,
-                        invalidShardId
-                );
-
-        boolean invalidLocationRejected =
-                !ConnectionTargetValidator.isValid(
-                        ConnectionType.LOCATION,
-                        invalidLocationId
-                );
-
-
-        // =========================================================
-        // GLOBAL RESULT
-        // =========================================================
-
-        boolean success =
-                planetExists
-                        && originAExists
-                        && originBExists
-                        && shardExists
-                        && locationExists
-                        && planetDimensionCorrect
-                        && originAPlanetCorrect
-                        && originBPlanetCorrect
-                        && registeredShardAccepted
-                        && registeredLocationAccepted
-                        && invalidShardRejected
-                        && invalidLocationRejected;
-
-
-        // =========================================================
-        // OUTPUT
-        // =========================================================
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§1------ §6REGISTRY TEST §1------"
-                ),
-                false
-        );
-
-
-        // PLANET
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Planet §f"
-                                + TestDefinition.TEST_PLANET.getId()
-                                + ": "
-                                + status(planetExists)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Planet dimension §f"
-                                + Level.OVERWORLD.location()
-                                + ": "
-                                + status(planetDimensionCorrect)
-                ),
-                false
-        );
-
-
-        // ORIGINS
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Origin §f"
-                                + TestDefinition.TEST_ORIGIN_A.getId()
-                                + ": "
-                                + status(originAExists)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Origin A -> Planet: "
-                                + status(originAPlanetCorrect)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Origin §f"
-                                + TestDefinition.TEST_ORIGIN_B.getId()
-                                + ": "
-                                + status(originBExists)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Origin B -> Planet: "
-                                + status(originBPlanetCorrect)
-                ),
-                false
-        );
-
-
-        // SHARD
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Shard §f"
-                                + TestDefinition.TEST_SHARD.getId()
-                                + ": "
-                                + status(shardExists)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Registered Shard accepted: "
-                                + status(registeredShardAccepted)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Unknown Shard rejected: "
-                                + status(invalidShardRejected)
-                ),
-                false
-        );
-
-
-        // LOCATION
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Location §f"
-                                + TestDefinition.TEST_LOCATION.getId()
-                                + ": "
-                                + status(locationExists)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Registered Location accepted: "
-                                + status(registeredLocationAccepted)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Unknown Location rejected: "
-                                + status(invalidLocationRejected)
-                ),
-                false
-        );
-
-
-        // RESULT
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        success
-                                ? "§aRegistry test: SUCCESS"
-                                : "§cRegistry test: FAILED"
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§1---------------------------"
-                ),
-                false
-        );
-
-        return success ? 1 : 0;
-    }
-
     private static int showRegistryContents(
             CommandSourceStack source
     ) {
@@ -766,36 +438,6 @@ public class CosmereCommands {
 
     private static String status(boolean result) {
         return result ? "§aOK" : "§cFAILED";
-    }
-
-    private static int networkPing(
-            CommandSourceStack source
-    ) {
-
-        if (!(source.getEntity() instanceof ServerPlayer player)) {
-
-            source.sendFailure(
-                    Component.literal(
-                            "Este comando debe ser ejecutado por un jugador."
-                    )
-            );
-
-            return 0;
-        }
-
-        PacketDistributor.sendToPlayer(
-                player,
-                NetworkPingS2CPayload.INSTANCE
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Cosmere API network test successful."
-                ),
-                false
-        );
-
-        return 1;
     }
 
     private static int onboardingStatus(
@@ -917,171 +559,6 @@ public class CosmereCommands {
         );
 
         return 1;
-    }
-
-    private static int giveTestTornPages(
-            CommandSourceStack source
-    ) {
-
-        if (!(source.getEntity() instanceof ServerPlayer player)) {
-
-            source.sendFailure(
-                    Component.literal(
-                            "This command must be executed by a player."
-                    )
-            );
-
-            return 0;
-        }
-
-        //Test data
-        ResourceLocation testPlanet =
-                ResourceLocation.fromNamespaceAndPath(
-                        CosmereAPI.MOD_ID,
-                        "test_planet"
-                );
-
-        ResourceLocation testEntryA =
-                ResourceLocation.fromNamespaceAndPath(
-                        CosmereAPI.MOD_ID,
-                        "test_entry_a"
-                );
-
-        ResourceLocation testEntryB =
-                ResourceLocation.fromNamespaceAndPath(
-                        CosmereAPI.MOD_ID,
-                        "test_entry_b"
-                );
-
-
-        // =========================================================
-        // CREATE TORN PAGES
-        // =========================================================
-
-        ItemStack stack =
-                TornPagesItem.create(
-                        testPlanet,
-                        List.of(
-                                testEntryA,
-                                testEntryB
-                        )
-                );
-
-
-        //Data lecture
-        TornPagesData data =
-                stack.get(
-                        CosmereDataComponents
-                                .TORN_PAGES_DATA
-                                .get()
-                );
-
-        //validate data
-        boolean dataExists =
-                data != null;
-
-        boolean planetCorrect =
-                dataExists
-                        && testPlanet.equals(
-                        data.planetId()
-                );
-
-        boolean entriesCorrect =
-                dataExists
-                        && data.entriesID().size() == 2
-                        && data.entriesID().contains(testEntryA)
-                        && data.entriesID().contains(testEntryB);
-
-        boolean success =
-                dataExists
-                        && planetCorrect
-                        && entriesCorrect;
-
-        //Gives valid stack
-        if (success) {
-
-            boolean added =
-                    player.getInventory().add(stack);
-
-            if (!added) {
-                player.drop(
-                        stack,
-                        false
-                );
-            }
-        }
-
-        //Output
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§1------ §6TORN PAGES TEST §1------"
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Data component exists: "
-                                + status(dataExists)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Planet: §b"
-                                + testPlanet
-                                + " "
-                                + status(planetCorrect)
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Entries stored: §d"
-                                + (
-                                dataExists
-                                        ? data.entriesID().size()
-                                        : 0
-                        )
-                                + " "
-                                + status(entriesCorrect)
-                ),
-                false
-        );
-
-        if (dataExists) {
-
-            for (ResourceLocation entry
-                    : data.entriesID()) {
-
-                source.sendSuccess(
-                        () -> Component.literal(
-                                "§7- §d" + entry
-                        ),
-                        false
-                );
-            }
-        }
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        success
-                                ? "§aTorn Pages data test: SUCCESS"
-                                : "§cTorn Pages data test: FAILED"
-                ),
-                false
-        );
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§1-----------------------------"
-                ),
-                false
-        );
-
-        return success ? 1 : 0;
     }
 
     private static int showHeldTornPages(

@@ -19,7 +19,6 @@ import net.rovalio.CosmereAPI.network.CosmereNetworking;
 import net.rovalio.CosmereAPI.onboarding.PlayerLoginHandler;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
-import net.rovalio.CosmereAPI.registry.test.TestDefinition;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -43,8 +42,6 @@ public class CosmereAPI {
 
         CosmereDataComponents.register(modEventBus);
         CosmereItems.register(modEventBus);
-
-        TestDefinition.register(modEventBus);
 
         PlayerLoginHandler.register();
 

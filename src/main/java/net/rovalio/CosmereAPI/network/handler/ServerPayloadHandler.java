@@ -17,16 +17,6 @@ public final class ServerPayloadHandler {
     private ServerPayloadHandler() {
     }
 
-    public static void handlePong(
-            NetworkPongC2SPayload payload,
-            IPayloadContext context
-    ) {
-        LOGGER.info(
-                "[Cosmere API Networking] C2S pong received on thread: {}",
-                Thread.currentThread().getName()
-        );
-    }
-
     // SELECT SPECIFIC ORIGIN
     public static void handleSelectOrigin(
             SelectOriginC2SPayload payload,

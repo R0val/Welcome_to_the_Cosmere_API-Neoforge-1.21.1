@@ -17,21 +17,6 @@ public final class ClientPayloadHandler {
     private ClientPayloadHandler() {
     }
 
-    public static void handlePing(
-            NetworkPingS2CPayload payload,
-            IPayloadContext context
-    ) {
-
-        LOGGER.info(
-                "[Cosmere API Networking] S2C ping received on thread: {}",
-                Thread.currentThread().getName()
-        );
-
-        context.reply(
-                NetworkPongC2SPayload.INSTANCE
-        );
-    }
-
     public static void handleOpenOnboarding(
             OpenOnboardingS2CPayload payload,
             IPayloadContext context

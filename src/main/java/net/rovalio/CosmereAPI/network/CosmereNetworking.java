@@ -9,7 +9,7 @@ import net.rovalio.CosmereAPI.network.payload.*;
 
 public final class CosmereNetworking {
 
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3";
 
     private CosmereNetworking() {
     }
@@ -21,20 +21,6 @@ public final class CosmereNetworking {
         final PayloadRegistrar registrar =
                 event.registrar(PROTOCOL_VERSION)
                         .executesOn(HandlerThread.NETWORK);
-
-        /// Test Server -> Client
-        registrar.playToClient(
-                NetworkPingS2CPayload.TYPE,
-                NetworkPingS2CPayload.STREAM_CODEC,
-                ClientPayloadHandler::handlePing
-        );
-
-        /// Test Client -> Server
-        registrar.playToServer(
-                NetworkPongC2SPayload.TYPE,
-                NetworkPongC2SPayload.STREAM_CODEC,
-                ServerPayloadHandler::handlePong
-        );
 
         // REAL
         registrar.playToClient(
