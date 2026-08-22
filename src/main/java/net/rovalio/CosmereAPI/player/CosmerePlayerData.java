@@ -55,9 +55,15 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
         this.originId = null;
     }
 
+    public void resetPlayer() {
+        this.spiritweb.resetPlayer();
+        resetOnboarding();
+    }
+
     //Creation and registry of the Player's Spiritweb
     public CosmerePlayerData (){
         this.spiritweb = new SpiritwebData();
+        resetPlayer();
     }
 
     public SpiritwebData getSpiritweb() {
@@ -113,6 +119,8 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
             HolderLookup.Provider provider,
             CompoundTag tag
     ) {
+        resetPlayer();
+
         if (tag.contains(
                 TAG_SPIRITWEB,
                 Tag.TAG_COMPOUND

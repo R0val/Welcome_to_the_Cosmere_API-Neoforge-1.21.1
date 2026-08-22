@@ -199,9 +199,7 @@ public final class PlayerStateCommandExecutor {
 
             CosmerePlayerData data = CosmereAttachments.get(player);
 
-            data.getSpiritweb().setIntegrity(SpiritwebData.DEFAULT_INTEGRITY);
-            data.getSpiritweb().setInvestitureBEU(SpiritwebData.DEFAULT_INVESTITURE_BEU);
-            data.getSpiritweb().setFortune(SpiritwebData.DEFAULT_FORTUNE);
+            data.getSpiritweb().resetStats();
 
             source.sendSuccess(
                     () -> Component.literal(

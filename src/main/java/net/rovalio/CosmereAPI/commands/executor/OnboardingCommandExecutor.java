@@ -6,14 +6,10 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.rovalio.CosmereAPI.network.payload.OnboardingResultS2CPayload;
 import net.rovalio.CosmereAPI.onboarding.OnboardingManager;
 import net.rovalio.CosmereAPI.onboarding.OnboardingResult;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.player.CosmerePlayerData;
-import net.rovalio.CosmereAPI.registry.CosmereRegistries;
-import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
 import org.slf4j.Logger;
 
 import java.util.Collection;
@@ -24,27 +20,30 @@ public final class OnboardingCommandExecutor {
     }
 
     public static int onboardingStatus(
-            CommandSourceStack source
+            CommandSourceStack source,
+            Collection<ServerPlayer> targets
     ) {
 
-        if (!(source.getEntity() instanceof ServerPlayer player)) {
-            return 0;
+        for (ServerPlayer player : targets) {
+
+            CosmerePlayerData data =
+                    CosmereAttachments.get(player);
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§7Onboarding complete for §f"
+                                    + player.getGameProfile()
+                                    .getName()
+                                    + "§7: "
+                                    + (data.isOnboardingComplete()
+                                    ? "§atrue"
+                                    : "§cfalse")
+                    ),
+                    false
+            );
         }
 
-        CosmerePlayerData data =
-                CosmereAttachments.get(player);
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "§7Onboarding complete: "
-                                + (data.isOnboardingComplete()
-                                ? "§atrue"
-                                : "§cfalse")
-                ),
-                false
-        );
-
-        return 1;
+        return targets.size();
     }
 
     public static int resetOnboarding(

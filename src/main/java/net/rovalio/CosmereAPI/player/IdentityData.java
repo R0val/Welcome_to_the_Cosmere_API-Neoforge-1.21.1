@@ -1,10 +1,14 @@
 package net.rovalio.CosmereAPI.player;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class IdentityData {
+
+    public static final double DEFAULT_STRENGTH = 1.0;
 
     private static final String TAG_ID = "Id";
     private static final String TAG_STRENGTH = "Strength";
@@ -12,10 +16,8 @@ public class IdentityData {
     private UUID identityId;
     private double strength;
 
-    //Gets Player UUID to have a unique key to use for Connections
     public IdentityData() {
-        this.identityId = null;
-        this.strength = 1.0;
+        reset();
     }
 
     public UUID getIdentityId() {
@@ -24,7 +26,11 @@ public class IdentityData {
 
     public void initialize(UUID playerId) {
         if (this.identityId == null) {
-            this.identityId = playerId;
+            this.identityId =
+                    Objects.requireNonNull(
+                            playerId,
+                            "Player ID cannot be null"
+                    );
         }
     }
 
@@ -33,32 +39,99 @@ public class IdentityData {
     }
 
     public void setStrength(double strength) {
-        this.strength = Math.max(0.0, strength);
-    }
-
-    //Save the Identity in NBT
-    public CompoundTag saveNBT() {
-        CompoundTag tag = new CompoundTag();
-
-        if (identityId != null) {
-            tag.putUUID(TAG_ID, identityId);
+        if (!Double.isFinite(strength)) {
+            throw new IllegalArgumentException(
+                    "Identity strength must be finite"
+            );
         }
 
-        tag.putDouble(TAG_STRENGTH, strength);
+        this.strength =
+                Math.max(
+                        0.0,
+                        strength
+                );
+    }
+
+    public void reset() {
+        this.identityId = null;
+        this.strength = DEFAULT_STRENGTH;
+    }
+
+    public static CompoundTag migrateNBT(
+            CompoundTag sourceTag
+    ) {
+        CompoundTag migratedTag =
+                sourceTag == null
+                        ? new CompoundTag()
+                        : sourceTag.copy();
+
+        double migratedStrength =
+                DEFAULT_STRENGTH;
+
+        if (migratedTag.contains(
+                TAG_STRENGTH,
+                Tag.TAG_ANY_NUMERIC
+        )) {
+            double loadedStrength =
+                    migratedTag.getDouble(
+                            TAG_STRENGTH
+                    );
+
+            if (Double.isFinite(loadedStrength)) {
+                migratedStrength =
+                        Math.max(
+                                0.0,
+                                loadedStrength
+                        );
+            }
+        }
+
+        migratedTag.putDouble(
+                TAG_STRENGTH,
+                migratedStrength
+        );
+
+        return migratedTag;
+    }
+
+    public CompoundTag saveNBT() {
+        CompoundTag tag =
+                new CompoundTag();
+
+        if (identityId != null) {
+            tag.putUUID(
+                    TAG_ID,
+                    identityId
+            );
+        }
+
+        tag.putDouble(
+                TAG_STRENGTH,
+                strength
+        );
 
         return tag;
     }
 
     public void loadNBT(CompoundTag tag) {
+        reset();
 
-        //Gets identity ID if its already storaged in NBT
-        if (tag.hasUUID(TAG_ID)) {
-            this.identityId = tag.getUUID(TAG_ID);
+        if (tag == null) {
+            return;
         }
 
-        //Gets identity strength if its already storaged in NBT
-        if (tag.contains(TAG_STRENGTH)) {
-            setStrength(tag.getDouble(TAG_STRENGTH));
+        CompoundTag migratedTag =
+                migrateNBT(tag);
+
+        if (migratedTag.hasUUID(TAG_ID)) {
+            this.identityId =
+                    migratedTag.getUUID(TAG_ID);
         }
+
+        setStrength(
+                migratedTag.getDouble(
+                        TAG_STRENGTH
+                )
+        );
     }
 }

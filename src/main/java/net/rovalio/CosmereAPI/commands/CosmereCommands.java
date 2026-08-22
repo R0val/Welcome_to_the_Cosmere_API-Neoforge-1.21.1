@@ -220,7 +220,11 @@ public class CosmereCommands {
                                         .then(Commands.argument("targets", EntityArgument.players())
                                                 .executes(context ->
                                                         onboardingStatus(
-                                                                context.getSource()
+                                                                context.getSource(),
+                                                                EntityArgument.getPlayers(
+                                                                        context,
+                                                                        "targets"
+                                                                )
                                                         )
                                                 )
                                         )
@@ -265,13 +269,6 @@ public class CosmereCommands {
                                                 context.getSource()
                                         )
                                 )
-                        )
-                )
-
-                .then(Commands.literal("test")
-                        .then(Commands.literal("network")
-
-
                         )
                 )
         );

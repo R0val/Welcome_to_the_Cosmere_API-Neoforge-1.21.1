@@ -45,9 +45,8 @@ public class SpiritwebData {
         //These are unique for every player
         this.identity = new IdentityData();
         this.connections = new ArrayList<>();
-
         this.investedArts = new HashSet<>();
-
+        resetPlayer();
     }
 
     /// Prohibites null, NaN, infinites and double entries
@@ -241,6 +240,21 @@ public class SpiritwebData {
         );
 
         investedArts.remove(art);
+    }
+
+    //Resets only universal stats
+    public void resetStats() {
+        this.integrity = DEFAULT_INTEGRITY;
+        this.investitureBEU = DEFAULT_INVESTITURE_BEU;
+        this.fortune = DEFAULT_FORTUNE;
+    }
+
+    //Resets the full Spiritweb
+    public void resetPlayer() {
+        resetStats();
+        this.identity.reset();
+        this.connections.clear();
+        this.investedArts.clear();
     }
 
     //NBT constructor
