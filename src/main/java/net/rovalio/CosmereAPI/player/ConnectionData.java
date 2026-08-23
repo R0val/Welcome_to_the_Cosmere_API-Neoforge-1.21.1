@@ -7,12 +7,30 @@ import java.util.Objects;
 public record ConnectionData(
         ConnectionType type,
         String target,
-        double strength
+        int strength
 ) {
 
     private static final String TAG_TYPE = "Type";
     private static final String TAG_TARGET = "Target";
     private static final String TAG_STRENGTH = "Strength";
+
+    public static final int MIN_STRENGTH = 0;
+    public static final int MAX_STRENGTH = 100;
+
+    public boolean hasKey(
+            ConnectionType type,
+            String target
+    ) {
+        return this.type == Objects.requireNonNull(
+                type,
+                "Connection type cannot be null"
+        ) && this.target.equals(
+                Objects.requireNonNull(
+                        target,
+                        "Connection target cannot be null"
+                )
+        );
+    }
 
     public ConnectionData {
         Objects.requireNonNull(
@@ -31,13 +49,14 @@ public record ConnectionData(
             );
         }
 
-        if (!Double.isFinite(strength)) {
-            throw new IllegalArgumentException(
-                    "Connection strength must be finite"
-            );
-        }
+        strength = normalizeStrength(strength);
+    }
 
-        strength = Math.max(0.0, strength);
+    private static int normalizeStrength(int strength) {
+        return Math.max(
+                MIN_STRENGTH,
+                Math.min(MAX_STRENGTH, strength)
+        );
     }
 
     public CompoundTag saveNBT() {
@@ -45,7 +64,7 @@ public record ConnectionData(
 
         tag.putString(TAG_TYPE, type.name());
         tag.putString(TAG_TARGET, target);
-        tag.putDouble(TAG_STRENGTH, strength);
+        tag.putInt(TAG_STRENGTH, strength);
 
         return tag;
     }
@@ -53,6 +72,10 @@ public record ConnectionData(
     public static ConnectionData loadNBT(
             CompoundTag tag
     ) {
+        if (tag == null) {
+            return null;
+        }
+
         try {
             ConnectionType type =
                     ConnectionType.valueOf(
@@ -62,8 +85,14 @@ public record ConnectionData(
             String target =
                     tag.getString(TAG_TARGET);
 
-            double strength =
-                    tag.getDouble(TAG_STRENGTH);
+            int strength = normalizeStrength(
+                    tag.getInt(TAG_STRENGTH)
+            );
+
+            // 0 strength means Connection does not exists anymore
+            if (strength == 0) {
+                return null;
+            }
 
             return new ConnectionData(
                     type,

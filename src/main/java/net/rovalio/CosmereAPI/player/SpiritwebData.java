@@ -79,9 +79,10 @@ public class SpiritwebData {
         );
     }
 
-    ///This is a Cosmere's unit used to quantify how much Investiture and entity has
-    /// Investiture is kind of "amount of magic energy" that an entity has.
-    /// It's measured in BEU (Breath Equivalent Unit)
+    /// Investiture
+    //This is a Cosmere's unit used to quantify how much Investiture and entity has
+    // Investiture is kind of "amount of magic energy" that an entity has.
+    // It's measured in BEU (Breath Equivalent Unit)
     public double getInvestitureBEU() {
         return investitureBEU;
     }
@@ -96,8 +97,9 @@ public class SpiritwebData {
         );
     }
 
-    ///Fortune is useful in the canon to know certain aspects about the future.
-    ///In this mod it will surely be used as literal fortune, but it's WIP
+    /// FORTUNE
+    //Fortune is useful in the canon to know certain aspects about the future.
+    //In this mod it will surely be used as literal fortune, but it's WIP
     public double getFortune() {
         return fortune;
     }
@@ -114,9 +116,32 @@ public class SpiritwebData {
         return identity;
     }
 
+    /// Connections
     //Gets the Connections list from ConnectionData.java
     public List<ConnectionData> getConnections() {
         return List.copyOf(connections);
+    }
+
+    private void storeConnection(
+            ConnectionData connection
+    ) {
+        Objects.requireNonNull(
+                connection,
+                "Connection cannot be null"
+        );
+
+        connections.removeIf(
+                existing -> existing.hasKey(
+                        connection.type(),
+                        connection.target()
+                )
+        );
+
+        if (connection.strength()
+                > ConnectionData.MIN_STRENGTH) {
+
+            connections.add(connection);
+        }
     }
 
     public void addConnection(
@@ -142,9 +167,9 @@ public class SpiritwebData {
                 "Connection cannot be null"
         );
 
-        connections.removeIf(existing ->
-                existing.type() == connection.type()
-                        && existing.target().equals(
+        connections.removeIf(
+                existing -> existing.hasKey(
+                        connection.type(),
                         connection.target()
                 )
         );
@@ -153,6 +178,23 @@ public class SpiritwebData {
     public ConnectionData getConnection(
             ConnectionType type,
             String target
+    ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(target);
+
+        for (ConnectionData connection : connections) {
+            if (connection.hasKey(type, target)) {
+                return connection;
+            }
+        }
+
+        return null;
+    }
+
+    public void setConnection(
+            ConnectionType type,
+            String target,
+            int strength
     ) {
         Objects.requireNonNull(
                 type,
@@ -164,47 +206,68 @@ public class SpiritwebData {
                 "Connection target cannot be null"
         );
 
-        for (ConnectionData connection : connections) {
-            if (connection.type() == type
-                    && connection.target().equals(target)) {
-                return connection;
-            }
+        ResourceLocation targetId =
+                ResourceLocation.tryParse(target);
+
+        if (targetId == null) {
+            throw new IllegalArgumentException(
+                    "Invalid Connection target ID: "
+                            + target
+            );
         }
 
-        return null;
-    }
+        String canonicalTarget =
+                targetId.toString();
 
-    public void setConnection(
-            ConnectionType type,
-            String target,
-            double strength
-    ) {
-        ConnectionData updatedConnection =
+        int normalizedStrength = Math.max(
+                ConnectionData.MIN_STRENGTH,
+                Math.min(
+                        ConnectionData.MAX_STRENGTH,
+                        strength
+                )
+        );
+
+        if (normalizedStrength == 0) {
+            connections.removeIf(
+                    connection -> connection.hasKey(
+                            type,
+                            canonicalTarget
+                    )
+            );
+
+            return;
+        }
+
+        if (!ConnectionTargetValidator.isValid(
+                type,
+                targetId
+        )) {
+            throw new IllegalArgumentException(
+                    "Unknown or unsupported Connection target: "
+                            + type
+                            + " -> "
+                            + canonicalTarget
+            );
+        }
+
+        storeConnection(
                 new ConnectionData(
                         type,
-                        target,
-                        strength
-                );
-
-        for (int i = 0; i < connections.size(); i++) {
-            ConnectionData existing =
-                    connections.get(i);
-
-            if (existing.type() == type
-                    && existing.target().equals(target)) {
-
-                connections.set(
-                        i,
-                        updatedConnection
-                );
-
-                return;
-            }
-        }
-
-        connections.add(updatedConnection);
+                        canonicalTarget,
+                        normalizedStrength
+                )
+        );
     }
 
+    public List<ConnectionData> getOrphanedConnections() {
+        return connections.stream()
+                .filter(
+                        ConnectionTargetValidator::isOrphaned
+                )
+                .toList();
+    }
+
+    /// Invested Arts
     public Set<ResourceLocation> getInvestedArts() {
         return Set.copyOf(investedArts);
     }
@@ -366,7 +429,7 @@ public class SpiritwebData {
                         ConnectionData.loadNBT(connectionTag);
 
                 if (connection != null) {
-                    addConnection(connection);
+                    storeConnection(connection);
                 }
             }
         }

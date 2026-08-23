@@ -35,4 +35,26 @@ public final class ConnectionTargetValidator {
                     false;
         };
     }
+
+    public static boolean isOrphaned(
+            ConnectionData connection
+    ) {
+        if (connection == null) {
+            return false;
+        }
+
+        ResourceLocation targetId =
+                ResourceLocation.tryParse(
+                        connection.target()
+                );
+
+        if (targetId == null) {
+            return true;
+        }
+
+        return !isValid(
+                connection.type(),
+                targetId
+        );
+    }
 }
