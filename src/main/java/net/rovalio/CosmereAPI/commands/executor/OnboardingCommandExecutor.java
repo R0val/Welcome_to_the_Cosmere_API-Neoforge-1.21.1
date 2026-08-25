@@ -6,10 +6,13 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.rovalio.CosmereAPI.network.payload.OpenOnboardingS2CPayload;
 import net.rovalio.CosmereAPI.onboarding.OnboardingManager;
 import net.rovalio.CosmereAPI.onboarding.OnboardingResult;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.player.CosmerePlayerData;
+import net.rovalio.CosmereAPI.player.PlayerStateLifecycleRegistry;
 import org.slf4j.Logger;
 
 import java.util.Collection;
@@ -50,24 +53,74 @@ public final class OnboardingCommandExecutor {
             CommandSourceStack source,
             Collection<ServerPlayer> targets
     ) {
+        int resetPlayers = 0;
+
         for (ServerPlayer player : targets) {
+
             CosmerePlayerData data =
                     CosmereAttachments.get(player);
 
             data.resetOnboarding();
 
+            PacketDistributor.sendToPlayer(
+                    player,
+                    OpenOnboardingS2CPayload.INSTANCE
+            );
+
+            PlayerStateLifecycleRegistry
+                    .RecalculationContext context;
+
+            try {
+                context =
+                        PlayerStateLifecycleRegistry
+                                .recalculate(
+                                        player,
+                                        PlayerStateLifecycleRegistry
+                                                .Reason
+                                                .RESET_ONBOARDING
+                                );
+
+            } catch (RuntimeException exception) {
+
+                source.sendFailure(
+                        Component.literal(
+                                "Onboarding was reset for "
+                                        + player.getGameProfile().getName()
+                                        + ", but addon recalculation failed: "
+                                        + exception.getMessage()
+                        )
+                );
+
+                continue;
+            }
+
             source.sendSuccess(
                     () -> Component.literal(
-                            "Onboarding reset for "
-                                    + player.getGameProfile()
-                                    .getName()
+                            "Onboarding reset and player state "
+                                    + "reconciled for "
+                                    + player.getGameProfile().getName()
                                     + ". Origin selection cleared."
                     ),
                     true
             );
+
+            for (Component message :
+                    context.getMessages()) {
+
+                source.sendSuccess(
+                        () -> Component.literal(
+                                "State correction for "
+                                        + player.getGameProfile().getName()
+                                        + ": "
+                        ).append(message),
+                        false
+                );
+            }
+
+            resetPlayers++;
         }
 
-        return targets.size();
+        return resetPlayers;
     }
 
     public static int showOrigin(

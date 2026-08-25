@@ -2,12 +2,10 @@ package net.rovalio.CosmereAPI.network.handler;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.rovalio.CosmereAPI.client.screen.AbstractOnboardingScreen;
 import net.rovalio.CosmereAPI.client.screen.TemporaryOnboardingScreen;
 import net.rovalio.CosmereAPI.network.payload.*;
-import net.rovalio.CosmereAPI.onboarding.OnboardingManager;
 import org.slf4j.Logger;
 
 public final class ClientPayloadHandler {

@@ -2,232 +2,35 @@ package net.rovalio.CosmereAPI.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.resources.ResourceLocation;
 import net.rovalio.CosmereAPI.commands.executor.OnboardingCommandExecutor;
 import net.rovalio.CosmereAPI.onboarding.OnboardingRegistryAccess;
 import net.rovalio.CosmereAPI.player.*;
-import net.rovalio.CosmereAPI.registry.CosmereRegistries;
 
-import java.util.Locale;
-import java.util.Set;
-
-import static net.rovalio.CosmereAPI.commands.executor.ConnectionCommandExecutor.*;
 import static net.rovalio.CosmereAPI.commands.executor.OnboardingCommandExecutor.*;
 import static net.rovalio.CosmereAPI.commands.executor.PlayerStateCommandExecutor.*;
 import static net.rovalio.CosmereAPI.commands.executor.RegistryCommandExecutor.showRegistryContents;
 import static net.rovalio.CosmereAPI.commands.executor.TornPagesCommandExecutor.showHeldTornPages;
 
-public class CosmereCommands {
+public final class CosmereCommands {
 
-    private static Iterable<ResourceLocation> getConnectionTargets(
-            ConnectionType type
-    ) {
-        return switch (type) {
-
-            case PLANET ->
-                    CosmereRegistries.PLANET_REGISTRY
-                            .keySet();
-
-            case LOCATION ->
-                    CosmereRegistries.LOCATION_REGISTRY
-                            .keySet();
-
-            case SHARD ->
-                    CosmereRegistries.SHARD_REGISTRY
-                            .keySet();
-
-            default ->
-                    Set.of();
-        };
+    private CosmereCommands() {
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-
-        /// Sets values from ConnectionType Enum as usable arguments for commands
-        var connectionListBranch =
-                Commands.literal("type");
-
-        var connectionGetBranch =
-                Commands.literal("type");
-
-        var connectionSetBranch =
-                Commands.literal("type");
-
-        var connectionEraseBranch =
-                Commands.literal("type");
-
-        for (ConnectionType connectionType :
-                ConnectionType.values()) {
-
-            String typeName =
-                    connectionType.name()
-                            .toLowerCase(Locale.ROOT);
-
-            // Checks all Connections from every type.
-            connectionListBranch.then(
-                    Commands.literal(typeName)
-                            .then(
-                                    Commands.argument(
-                                                    "targets",
-                                                    EntityArgument.players()
-                                            )
-                                            .executes(context ->
-                                                    listConnections(
-                                                            context.getSource(),
-                                                            EntityArgument.getPlayers(
-                                                                    context,
-                                                                    "targets"
-                                                            ),
-                                                            connectionType
-                                                    )
-                                            )
-                            )
-            );
-
-            //Checks an specific Connections
-            connectionGetBranch.then(
-                    Commands.literal(typeName)
-                            .then(
-                                    Commands.argument(
-                                                    "targets",
-                                                    EntityArgument.players()
-                                            )
-                                            .then(
-                                                    Commands.argument(
-                                                                    "target",
-                                                                    ResourceLocationArgument.id()
-                                                            )
-                                                            .executes(context ->
-                                                                    getConnection(
-                                                                            context.getSource(),
-                                                                            EntityArgument.getPlayers(
-                                                                                    context,
-                                                                                    "targets"
-                                                                            ),
-                                                                            connectionType,
-                                                                            ResourceLocationArgument.getId(
-                                                                                    context,
-                                                                                    "target"
-                                                                            )
-                                                                    )
-                                                            )
-                                            )
-                            )
-            );
-
-            // Erase admits every type because it needs to be able to delete reserved or orphan references
-            connectionEraseBranch.then(
-                    Commands.literal(typeName)
-                            .then(
-                                    Commands.argument(
-                                                    "targets",
-                                                    EntityArgument.players()
-                                            )
-                                            .then(
-                                                    Commands.argument(
-                                                                    "target",
-                                                                    ResourceLocationArgument.id()
-                                                            )
-                                                            .executes(context ->
-                                                                    eraseConnection(
-                                                                            context.getSource(),
-                                                                            EntityArgument.getPlayers(
-                                                                                    context,
-                                                                                    "targets"
-                                                                            ),
-                                                                            connectionType,
-                                                                            ResourceLocationArgument.getId(
-                                                                                    context,
-                                                                                    "target"
-                                                                            )
-                                                                    )
-                                                            )
-                                            )
-                            )
-            );
-
-            boolean supportedType =
-                    connectionType == ConnectionType.PLANET
-                            || connectionType == ConnectionType.LOCATION
-                            || connectionType == ConnectionType.SHARD;
-
-            //only te three functional types appear under this
-            if (supportedType) {
-
-                connectionSetBranch.then(
-                        Commands.literal(typeName)
-                                .then(
-                                        Commands.argument(
-                                                        "targets",
-                                                        EntityArgument.players()
-                                                )
-                                                .then(
-                                                        Commands.argument(
-                                                                        "target",
-                                                                        ResourceLocationArgument.id()
-                                                                )
-                                                                .suggests(
-                                                                        (context, builder) ->
-                                                                                SharedSuggestionProvider
-                                                                                        .suggestResource(
-                                                                                                getConnectionTargets(
-                                                                                                        connectionType
-                                                                                                ),
-                                                                                                builder
-                                                                                        )
-                                                                )
-                                                                .then(
-                                                                        Commands.argument(
-                                                                                        "strength",
-                                                                                        IntegerArgumentType.integer(
-                                                                                                1,
-                                                                                                100
-                                                                                        )
-                                                                                )
-                                                                                .executes(context ->
-                                                                                        setConnection(
-                                                                                                context.getSource(),
-                                                                                                EntityArgument.getPlayers(
-                                                                                                        context,
-                                                                                                        "targets"
-                                                                                                ),
-                                                                                                connectionType,
-                                                                                                ResourceLocationArgument.getId(
-                                                                                                        context,
-                                                                                                        "target"
-                                                                                                ),
-                                                                                                IntegerArgumentType.getInteger(
-                                                                                                        context,
-                                                                                                        "strength"
-                                                                                                )
-                                                                                        )
-                                                                                )
-                                                                )
-                                                )
-                                )
-                );
-            }
-        }
+    public static void register(
+            CommandDispatcher<CommandSourceStack> dispatcher) {
 
         dispatcher.register(Commands.literal("cosmere")
 
                 .then(Commands.literal("show")
 
-                        .then(Commands.literal("connection")
-
-                                .then(Commands.literal("list")
-                                        .then(connectionListBranch)
-                                )
-
-                                .then(Commands.literal("get")
-                                        .then(connectionGetBranch)
-                                )
+                        .then(
+                                ConnectionCommandTree
+                                        .createShowBranch()
                         )
 
                         .then(Commands.literal("investedarts")
@@ -253,15 +56,9 @@ public class CosmereCommands {
                                 source.hasPermission(2)
                         )
 
-                        .then(Commands.literal("connection")
-
-                                .then(Commands.literal("set")
-                                        .then(connectionSetBranch)
-                                )
-
-                                .then(Commands.literal("erase")
-                                        .then(connectionEraseBranch)
-                                )
+                        .then(
+                                ConnectionCommandTree
+                                        .createConfigBranch()
                         )
 
                         .then(Commands.literal("origin")
@@ -379,8 +176,11 @@ public class CosmereCommands {
                                                 )
                                         )
                                 )
+                        )
 
-                                .then(Commands.literal("reset")
+
+                        .then(Commands.literal("reset")
+                                .then(Commands.literal("stats")
                                         .then(Commands.argument("targets", EntityArgument.players())
                                                 .executes(context ->
                                                         resetValues(
@@ -390,6 +190,24 @@ public class CosmereCommands {
                                                 )
                                         )
                                 )
+
+                                .then(Commands.literal("player")
+
+                                        .then(Commands.argument("targets", EntityArgument.players())
+                                                .then(Commands.literal("confirm")
+                                                        .executes(context ->
+                                                                resetPlayer(
+                                                                        context.getSource(),
+                                                                        EntityArgument.getPlayers(
+                                                                                context,
+                                                                                "targets"
+                                                                        )
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+
                         )
 
                         .then(Commands.literal("onboarding")

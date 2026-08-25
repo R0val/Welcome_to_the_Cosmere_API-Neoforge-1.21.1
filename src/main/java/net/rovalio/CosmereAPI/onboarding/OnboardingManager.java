@@ -70,6 +70,17 @@ public final class OnboardingManager {
             return initializationResult;
         }
 
+        boolean connectionsApplied =
+                OriginConnectionRegistry
+                        .applyConnections(
+                                player,
+                                originId
+                        );
+
+        if (!connectionsApplied) {
+            return OnboardingResult.INITIALIZATION_FAILED;
+        }
+
         data.completeOnboarding(
                 planetId,
                 originId
@@ -213,30 +224,24 @@ public final class OnboardingManager {
         CosmerePlayerData data =
                 CosmereAttachments.get(player);
 
-        // Avoids reapplying the origin the player already has
         if (planetId.equals(data.getOriginPlanetId())
                 && originId.equals(data.getOriginId())) {
 
             return OnboardingResult.ORIGIN_ALREADY_SELECTED;
         }
 
-        //Initializes the new origin before modifyingthe player's persistent origin selection.
-        //If initialization fails, the stored planet and origin remain unchanged.
-        OnboardingResult initializationResult =
-                OriginInitializationRegistry.initialize(
-                        player,
-                        planetId,
-                        originId
-                );
+        // Change Origin does not execute onboarding again. It only modifies Connections
+        boolean connectionsApplied =
+                OriginConnectionRegistry
+                        .applyConnections(
+                                player,
+                                originId
+                        );
 
-        if (!initializationResult.isSuccess()) {
-            return initializationResult;
+        if (!connectionsApplied) {
+            return OnboardingResult.INITIALIZATION_FAILED;
         }
 
-        /*
-         * Overwrites the previous planet and origin.
-         * onboardingComplete remains true.
-         */
         data.completeOnboarding(
                 planetId,
                 originId
