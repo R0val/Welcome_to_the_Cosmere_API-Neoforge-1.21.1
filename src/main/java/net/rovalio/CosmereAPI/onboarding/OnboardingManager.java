@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.player.CosmerePlayerData;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
+import net.rovalio.CosmereAPI.registry.OriginConnectionRegistry;
 import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
 import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
 
@@ -56,6 +57,12 @@ public final class OnboardingManager {
 
         if (!planet.selectableInOnboarding()) {
             return OnboardingResult.PLANET_NOT_SELECTABLE;
+        }
+
+        if (!OriginConnectionRegistry
+                .areConnectionsValid(originId)) {
+
+            return OnboardingResult.INITIALIZATION_FAILED;
         }
 
         OnboardingResult initializationResult =

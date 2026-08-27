@@ -41,6 +41,25 @@ public final class RegistryCommandExecutor {
             );
         }
 
+        // Shards
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§6Shards:"
+                ),
+                false
+        );
+
+        for (ResourceLocation shardId
+                : CosmereRegistries.SHARD_REGISTRY.keySet()) {
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§7- §b" + shardId
+                    ),
+                    false
+            );
+        }
+
         // Origins
         source.sendSuccess(
                 () -> Component.literal(

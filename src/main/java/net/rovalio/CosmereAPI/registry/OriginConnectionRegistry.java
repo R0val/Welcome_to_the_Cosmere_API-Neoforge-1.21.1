@@ -1,4 +1,4 @@
-package net.rovalio.CosmereAPI.onboarding;
+package net.rovalio.CosmereAPI.registry;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -162,35 +162,18 @@ public final class OriginConnectionRegistry {
             ServerPlayer player,
             ResourceLocation originId
     ) {
-        if (player == null || originId == null) {
+        if (player == null
+                || !areConnectionsValid(originId)) {
+
             return false;
         }
 
         List<ConnectionData> originConnections =
                 getConnections(originId);
 
-        // An origin without entries is valid
+        // An origin without registered Connections is valid
         if (originConnections.isEmpty()) {
             return true;
-        }
-
-        //Validation of all the declarations
-        for (ConnectionData connection :
-                originConnections) {
-
-            ResourceLocation targetId =
-                    ResourceLocation.tryParse(
-                            connection.target()
-                    );
-
-            if (targetId == null
-                    || !ConnectionTargetValidator.isValid(
-                    connection.type(),
-                    targetId
-            )) {
-
-                return false;
-            }
         }
 
         SpiritwebData spiritweb =
@@ -206,7 +189,8 @@ public final class OriginConnectionRegistry {
                             declaredConnection.target()
                     );
 
-            // Strength is only created or increased, never decreased
+            // Creates or increases the Connection,
+            // but never reduces an existing strength
             if (existingConnection == null
                     || existingConnection.strength()
                     < declaredConnection.strength()) {
@@ -216,6 +200,34 @@ public final class OriginConnectionRegistry {
                         declaredConnection.target(),
                         declaredConnection.strength()
                 );
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean areConnectionsValid(
+            ResourceLocation originId
+    ) {
+        if (originId == null) {
+            return false;
+        }
+
+        for (ConnectionData connection :
+                getConnections(originId)) {
+
+            ResourceLocation targetId =
+                    ResourceLocation.tryParse(
+                            connection.target()
+                    );
+
+            if (targetId == null
+                    || !ConnectionTargetValidator.isValid(
+                    connection.type(),
+                    targetId
+            )) {
+
+                return false;
             }
         }
 

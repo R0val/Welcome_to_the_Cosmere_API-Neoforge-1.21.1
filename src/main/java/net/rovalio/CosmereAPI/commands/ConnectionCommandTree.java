@@ -8,6 +8,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.resources.ResourceLocation;
+import net.rovalio.CosmereAPI.player.ConnectionData;
 import net.rovalio.CosmereAPI.player.ConnectionType;
 import net.rovalio.CosmereAPI.registry.CosmereRegistries;
 
@@ -15,12 +16,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static net.rovalio.CosmereAPI.commands.executor.ConnectionCommandExecutor.eraseConnection;
-import static net.rovalio.CosmereAPI.commands.executor.ConnectionCommandExecutor.getConnection;
-import static net.rovalio.CosmereAPI.commands.executor.ConnectionCommandExecutor.listConnections;
-import static net.rovalio.CosmereAPI.commands.executor.ConnectionCommandExecutor.setConnection;
+import static net.rovalio.CosmereAPI.commands.executor.ConnectionCommandExecutor.*;
 
 public final class ConnectionCommandTree {
+
+    private static final List<ConnectionType>
+            CONFIGURABLE_TYPES =
+            List.of(
+                    ConnectionType.PLANET,
+                    ConnectionType.LOCATION,
+                    ConnectionType.SHARD
+            );
 
     private ConnectionCommandTree() {
     }
@@ -28,21 +34,24 @@ public final class ConnectionCommandTree {
     public static LiteralArgumentBuilder<CommandSourceStack>
     createShowBranch() {
 
-        return Commands.literal("connection")
+        var branch =
+                Commands.literal("connection");
 
-                .then(
-                        Commands.literal("list")
-                                .then(
-                                        createListTypeBranch()
-                                )
-                )
+        branch.then(
+                createListBranch()
+        );
 
-                .then(
-                        Commands.literal("get")
-                                .then(
-                                        createGetTypeBranch()
-                                )
-                );
+        for (ConnectionType connectionType :
+                ConnectionType.values()) {
+
+            branch.then(
+                    createShowConnectionBranch(
+                            connectionType
+                    )
+            );
+        }
+
+        return branch;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack>
@@ -51,25 +60,40 @@ public final class ConnectionCommandTree {
         return Commands.literal("connection")
 
                 .then(
-                        Commands.literal("set")
-                                .then(
-                                        createSetTypeBranch()
-                                )
+                        createSetBranch()
                 )
 
                 .then(
-                        Commands.literal("erase")
-                                .then(
-                                        createEraseTypeBranch()
-                                )
+                        createEraseBranch()
                 );
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack>
-    createListTypeBranch() {
+    createListBranch() {
 
         var branch =
-                Commands.literal("type");
+                Commands.literal("list");
+
+        branch.then(
+                Commands.literal("all")
+
+                        .then(
+                                Commands.argument(
+                                                "players",
+                                                EntityArgument.players()
+                                        )
+
+                                        .executes(context ->
+                                                listAllConnections(
+                                                        context.getSource(),
+                                                        EntityArgument.getPlayers(
+                                                                context,
+                                                                "players"
+                                                        )
+                                                )
+                                        )
+                        )
+        );
 
         for (ConnectionType connectionType :
                 ConnectionType.values()) {
@@ -82,7 +106,7 @@ public final class ConnectionCommandTree {
 
                             .then(
                                     Commands.argument(
-                                                    "targets",
+                                                    "players",
                                                     EntityArgument.players()
                                             )
 
@@ -91,7 +115,7 @@ public final class ConnectionCommandTree {
                                                             context.getSource(),
                                                             EntityArgument.getPlayers(
                                                                     context,
-                                                                    "targets"
+                                                                    "players"
                                                             ),
                                                             connectionType
                                                     )
@@ -104,69 +128,63 @@ public final class ConnectionCommandTree {
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack>
-    createGetTypeBranch() {
+    createShowConnectionBranch(
+            ConnectionType connectionType
+    ) {
+        String typeName =
+                getTypeName(connectionType);
 
-        var branch =
-                Commands.literal("type");
+        return Commands.literal(typeName)
 
-        for (ConnectionType connectionType :
-                ConnectionType.values()) {
+                .then(
+                        Commands.argument(
+                                        "connection_target",
+                                        ResourceLocationArgument.id()
+                                )
 
-            String typeName =
-                    getTypeName(connectionType);
+                                .suggests(
+                                        (context, builder) ->
+                                                SharedSuggestionProvider
+                                                        .suggestResource(
+                                                                getConnectionTargets(
+                                                                        connectionType
+                                                                ),
+                                                                builder
+                                                        )
+                                )
 
-            branch.then(
-                    Commands.literal(typeName)
+                                .then(
+                                        Commands.argument(
+                                                        "players",
+                                                        EntityArgument.players()
+                                                )
 
-                            .then(
-                                    Commands.argument(
-                                                    "targets",
-                                                    EntityArgument.players()
-                                            )
-
-                                            .then(
-                                                    Commands.argument(
-                                                                    "target",
-                                                                    ResourceLocationArgument.id()
-                                                            )
-
-                                                            .executes(context ->
-                                                                    getConnection(
-                                                                            context.getSource(),
-                                                                            EntityArgument.getPlayers(
-                                                                                    context,
-                                                                                    "targets"
-                                                                            ),
-                                                                            connectionType,
-                                                                            ResourceLocationArgument.getId(
-                                                                                    context,
-                                                                                    "target"
-                                                                            )
-                                                                    )
-                                                            )
-                                            )
-                            )
-            );
-        }
-
-        return branch;
+                                                .executes(context ->
+                                                        getConnection(
+                                                                context.getSource(),
+                                                                EntityArgument.getPlayers(
+                                                                        context,
+                                                                        "players"
+                                                                ),
+                                                                connectionType,
+                                                                ResourceLocationArgument.getId(
+                                                                        context,
+                                                                        "connection_target"
+                                                                )
+                                                        )
+                                                )
+                                )
+                );
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack>
-    createSetTypeBranch() {
+    createSetBranch() {
 
         var branch =
-                Commands.literal("type");
-
-        List<ConnectionType> supportedTypes =
-                List.of(
-                        ConnectionType.PLANET,
-                        ConnectionType.LOCATION,
-                        ConnectionType.SHARD
-                );
+                Commands.literal("set");
 
         for (ConnectionType connectionType :
-                supportedTypes) {
+                CONFIGURABLE_TYPES) {
 
             String typeName =
                     getTypeName(connectionType);
@@ -176,33 +194,33 @@ public final class ConnectionCommandTree {
 
                             .then(
                                     Commands.argument(
-                                                    "targets",
-                                                    EntityArgument.players()
+                                                    "connection_target",
+                                                    ResourceLocationArgument.id()
+                                            )
+
+                                            .suggests(
+                                                    (context, builder) ->
+                                                            SharedSuggestionProvider
+                                                                    .suggestResource(
+                                                                            getConnectionTargets(
+                                                                                    connectionType
+                                                                            ),
+                                                                            builder
+                                                                    )
                                             )
 
                                             .then(
                                                     Commands.argument(
-                                                                    "target",
-                                                                    ResourceLocationArgument.id()
-                                                            )
-
-                                                            .suggests(
-                                                                    (context, builder) ->
-                                                                            SharedSuggestionProvider
-                                                                                    .suggestResource(
-                                                                                            getConnectionTargets(
-                                                                                                    connectionType
-                                                                                            ),
-                                                                                            builder
-                                                                                    )
+                                                                    "players",
+                                                                    EntityArgument.players()
                                                             )
 
                                                             .then(
                                                                     Commands.argument(
                                                                                     "strength",
                                                                                     IntegerArgumentType.integer(
-                                                                                            1,
-                                                                                            100
+                                                                                            ConnectionData.MIN_STRENGTH + 1,
+                                                                                            ConnectionData.MAX_STRENGTH
                                                                                     )
                                                                             )
 
@@ -211,12 +229,12 @@ public final class ConnectionCommandTree {
                                                                                             context.getSource(),
                                                                                             EntityArgument.getPlayers(
                                                                                                     context,
-                                                                                                    "targets"
+                                                                                                    "players"
                                                                                             ),
                                                                                             connectionType,
                                                                                             ResourceLocationArgument.getId(
                                                                                                     context,
-                                                                                                    "target"
+                                                                                                    "connection_target"
                                                                                             ),
                                                                                             IntegerArgumentType.getInteger(
                                                                                                     context,
@@ -234,14 +252,14 @@ public final class ConnectionCommandTree {
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack>
-    createEraseTypeBranch() {
+    createEraseBranch() {
 
         var branch =
-                Commands.literal("type");
+                Commands.literal("erase");
 
         /*
-         * Erase incluye todos los tipos para permitir
-         * eliminar referencias reservadas o huérfanas.
+         * Every type is available here so reserved
+         * or orphaned Connections can still be removed.
          */
         for (ConnectionType connectionType :
                 ConnectionType.values()) {
@@ -254,14 +272,29 @@ public final class ConnectionCommandTree {
 
                             .then(
                                     Commands.argument(
-                                                    "targets",
-                                                    EntityArgument.players()
+                                                    "connection_target",
+                                                    ResourceLocationArgument.id()
+                                            )
+
+                                            /*
+                                             * Suggestions only help the user.
+                                             * Manually entered orphan IDs remain valid.
+                                             */
+                                            .suggests(
+                                                    (context, builder) ->
+                                                            SharedSuggestionProvider
+                                                                    .suggestResource(
+                                                                            getConnectionTargets(
+                                                                                    connectionType
+                                                                            ),
+                                                                            builder
+                                                                    )
                                             )
 
                                             .then(
                                                     Commands.argument(
-                                                                    "target",
-                                                                    ResourceLocationArgument.id()
+                                                                    "players",
+                                                                    EntityArgument.players()
                                                             )
 
                                                             .executes(context ->
@@ -269,12 +302,12 @@ public final class ConnectionCommandTree {
                                                                             context.getSource(),
                                                                             EntityArgument.getPlayers(
                                                                                     context,
-                                                                                    "targets"
+                                                                                    "players"
                                                                             ),
                                                                             connectionType,
                                                                             ResourceLocationArgument.getId(
                                                                                     context,
-                                                                                    "target"
+                                                                                    "connection_target"
                                                                             )
                                                                     )
                                                             )

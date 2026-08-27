@@ -30,7 +30,7 @@ public final class CosmereCommands {
 
                         .then(
                                 ConnectionCommandTree
-                                        .createShowBranch()
+                                        .createShowBranch() 
                         )
 
                         .then(Commands.literal("investedarts")
