@@ -5,12 +5,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 import net.rovalio.CosmereAPI.CosmereAPI;
-import net.rovalio.CosmereAPI.registry.definition.LocationDefinition;
-import net.rovalio.CosmereAPI.registry.definition.OriginDefinition;
-import net.rovalio.CosmereAPI.registry.definition.PlanetDefinition;
+import net.rovalio.CosmereAPI.registry.definition.*;
 
 import net.minecraft.core.Registry;
-import net.rovalio.CosmereAPI.registry.definition.ShardDefinition;
 
 public final class CosmereRegistries {
 
@@ -71,6 +68,26 @@ public final class CosmereRegistries {
                     .sync(true)
                     .create();
 
+    // Invested Arts
+    public static final ResourceKey<
+            Registry<InvestedArtDefinition>
+            > INVESTED_ART_REGISTRY_KEY =
+            ResourceKey.createRegistryKey(
+                    ResourceLocation.fromNamespaceAndPath(
+                            CosmereAPI.MOD_ID,
+                            "invested_art"
+                    )
+            );
+
+    public static final Registry<
+            InvestedArtDefinition
+            > INVESTED_ART_REGISTRY =
+            new RegistryBuilder<>(
+                    INVESTED_ART_REGISTRY_KEY
+            )
+                    .sync(true)
+                    .create();
+
     private CosmereRegistries() {
     }
 
@@ -80,5 +97,6 @@ public final class CosmereRegistries {
         event.register(ORIGIN_REGISTRY);
         event.register(SHARD_REGISTRY);
         event.register(LOCATION_REGISTRY);
+        event.register(INVESTED_ART_REGISTRY);
     }
 }

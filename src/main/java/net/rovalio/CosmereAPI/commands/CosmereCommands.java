@@ -30,12 +30,12 @@ public final class CosmereCommands {
 
                         .then(
                                 ConnectionCommandTree
-                                        .createShowBranch() 
+                                        .createShowBranch()
                         )
 
-                        .then(Commands.literal("investedarts")
-
-                                .then(Commands.literal("list"))
+                        .then(
+                                InvestedArtCommandTree
+                                        .createShowBranch()
                         )
 
                         .then(Commands.literal("origin")
@@ -115,11 +115,9 @@ public final class CosmereCommands {
                                 )
                         )
 
-                        .then(Commands.literal("investedarts")
-
-                                .then(Commands.literal("grant"))
-
-                                .then(Commands.literal("revoke"))
+                        .then(
+                                InvestedArtCommandTree
+                                        .createConfigBranch()
                         )
 
                         .then(Commands.literal("stats")

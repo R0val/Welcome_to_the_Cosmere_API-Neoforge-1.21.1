@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.*;
 
 import net.minecraft.nbt.StringTag;
+import net.rovalio.CosmereAPI.registry.CosmereRegistries;
 
 ///This class is used to compact all Spiritweb aspects from their individual classes,
 /// so these aspects can be accessed easily from one individual class
@@ -283,7 +284,7 @@ public class SpiritwebData {
         return investedArts.contains(art);
     }
 
-    public void grantInvestedArt(
+    public boolean grantInvestedArt(
             ResourceLocation art
     ) {
         Objects.requireNonNull(
@@ -291,10 +292,20 @@ public class SpiritwebData {
                 "Invested Art ID cannot be null"
         );
 
-        investedArts.add(art);
+        if (!CosmereRegistries
+                .INVESTED_ART_REGISTRY
+                .containsKey(art)) {
+
+            throw new IllegalArgumentException(
+                    "Unknown Invested Art ID: "
+                            + art
+            );
+        }
+
+        return investedArts.add(art);
     }
 
-    public void revokeInvestedArt(
+    public boolean revokeInvestedArt(
             ResourceLocation art
     ) {
         Objects.requireNonNull(
@@ -302,17 +313,34 @@ public class SpiritwebData {
                 "Invested Art ID cannot be null"
         );
 
-        investedArts.remove(art);
+        return investedArts.remove(art);
     }
 
-    //Resets only universal stats
+    public List<ResourceLocation>
+    getOrphanedInvestedArts() {
+
+        return investedArts.stream()
+                .filter(art ->
+                        !CosmereRegistries
+                                .INVESTED_ART_REGISTRY
+                                .containsKey(art)
+                )
+                .sorted(
+                        Comparator.comparing(
+                                ResourceLocation::toString
+                        )
+                )
+                .toList();
+    }
+
+    ///Resets only universal stats
     public void resetStats() {
         this.integrity = DEFAULT_INTEGRITY;
         this.investitureBEU = DEFAULT_INVESTITURE_BEU;
         this.fortune = DEFAULT_FORTUNE;
     }
 
-    //Resets the full Spiritweb
+    ///Resets the full Spiritweb
     public void resetPlayer() {
         resetStats();
         this.identity.reset();

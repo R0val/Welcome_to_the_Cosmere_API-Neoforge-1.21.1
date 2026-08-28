@@ -85,6 +85,25 @@ public final class RegistryCommandExecutor {
             );
         }
 
+        // Invested Arts
+        source.sendSuccess(
+                () -> Component.literal(
+                        "§6Invested Arts:"
+                ),
+                false
+        );
+
+        for (ResourceLocation investedArtId
+                : CosmereRegistries.INVESTED_ART_REGISTRY.keySet()) {
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "§7- §b" + investedArtId
+                    ),
+                    false
+            );
+        }
+
         source.sendSuccess(
                 () -> Component.literal(
                         "§1--------------------------------"
