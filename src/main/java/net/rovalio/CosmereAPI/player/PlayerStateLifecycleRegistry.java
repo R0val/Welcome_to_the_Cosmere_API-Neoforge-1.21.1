@@ -73,28 +73,52 @@ public final class PlayerStateLifecycleRegistry {
         RecalculationContext context =
                 new RecalculationContext();
 
+        RuntimeException firstFailure = null;
+
         for (Map.Entry<ResourceLocation, Handler> entry :
                 HANDLERS.entrySet()) {
+
+            RecalculationContext handlerContext =
+                    new RecalculationContext();
 
             try {
                 entry.getValue()
                         .recalculate(
                                 player,
                                 reason,
-                                context
+                                handlerContext
                         );
+
+                context.mergeFrom(
+                        handlerContext
+                );
 
             } catch (RuntimeException exception) {
 
-                throw new IllegalStateException(
-                        "Player State Lifecycle handler failed: "
-                                + entry.getKey(),
-                        exception
-                );
+                IllegalStateException wrappedException =
+                        new IllegalStateException(
+                                "Player State Lifecycle handler failed: "
+                                        + entry.getKey(),
+                                exception
+                        );
+
+                if (firstFailure == null) {
+                    firstFailure = wrappedException;
+                } else {
+                    firstFailure.addSuppressed(
+                            wrappedException
+                    );
+                }
             }
         }
 
-        context.applyTo(player);
+        if (reason == Reason.RESET_STATS) {
+            context.applyTo(player);
+        }
+
+        if (firstFailure != null) {
+            throw firstFailure;
+        }
 
         return context;
     }
@@ -156,6 +180,8 @@ public final class PlayerStateLifecycleRegistry {
     }
 
     public enum Reason {
+        PLAYER_LOGIN,
+        PLAYER_RESPAWN,
         RESET_STATS,
         RESET_ONBOARDING
     }
@@ -301,10 +327,6 @@ public final class PlayerStateLifecycleRegistry {
                 ServerPlayer player
         ) {
 
-            if (modifiers.isEmpty()) {
-                return;
-            }
-
             SpiritwebData spiritweb =
                     CosmereAttachments.get(player)
                             .getSpiritweb();
@@ -333,6 +355,42 @@ public final class PlayerStateLifecycleRegistry {
             }
 
             return value;
+        }
+
+        private void mergeFrom(
+                RecalculationContext source
+        ) {
+            Objects.requireNonNull(
+                    source,
+                    "Source recalculation context cannot be null"
+            );
+
+            for (ResourceLocation sourceId :
+                    source.modifiers.keySet()) {
+
+                if (modifiers.containsKey(sourceId)) {
+                    throw new IllegalStateException(
+                            "A modifier is already registered "
+                                    + "for source: "
+                                    + sourceId
+                    );
+                }
+            }
+
+            for (ResourceLocation sourceId :
+                    source.messages.keySet()) {
+
+                if (messages.containsKey(sourceId)) {
+                    throw new IllegalStateException(
+                            "A correction message is already "
+                                    + "registered for source: "
+                                    + sourceId
+                    );
+                }
+            }
+
+            modifiers.putAll(source.modifiers);
+            messages.putAll(source.messages);
         }
     }
 

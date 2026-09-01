@@ -8,23 +8,36 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import java.util.Objects;
 
-public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
+public class CosmerePlayerData
+        implements INBTSerializable<CompoundTag> {
 
-    private static final String TAG_SPIRITWEB = "Spiritweb";
+    private static final String
+            TAG_SPIRITWEB =
+            "Spiritweb";
 
-    private static final String TAG_ONBOARDING_COMPLETE =
+    private static final String
+            TAG_ONBOARDING_COMPLETE =
             "OnboardingComplete";
 
-    private static final String TAG_ORIGIN_PLANET = "OriginPlanet";
-    private static final String TAG_ORIGIN = "Origin";
+    private static final String
+            TAG_ORIGIN_PLANET =
+            "OriginPlanet";
 
-    private ResourceLocation originPlanetId = null;
-    private ResourceLocation originId = null;
+    private static final String
+            TAG_ORIGIN =
+            "Origin";
 
     private final SpiritwebData spiritweb;
 
-    //Onboarding
-    private boolean onboardingComplete = false;
+    private ResourceLocation originPlanetId;
+    private ResourceLocation originId;
+
+    private boolean onboardingComplete;
+
+    public CosmerePlayerData() {
+        spiritweb = new SpiritwebData();
+        resetPlayer();
+    }
 
     public boolean isOnboardingComplete() {
         return onboardingComplete;
@@ -46,24 +59,18 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
                         "Origin ID cannot be null"
                 );
 
-        this.onboardingComplete = true;
+        onboardingComplete = true;
     }
 
     public void resetOnboarding() {
-        this.onboardingComplete = false;
-        this.originPlanetId = null;
-        this.originId = null;
+        onboardingComplete = false;
+        originPlanetId = null;
+        originId = null;
     }
 
     public void resetPlayer() {
-        this.spiritweb.resetPlayer();
+        spiritweb.resetPlayer();
         resetOnboarding();
-    }
-
-    //Creation and registry of the Player's Spiritweb
-    public CosmerePlayerData (){
-        this.spiritweb = new SpiritwebData();
-        resetPlayer();
     }
 
     public SpiritwebData getSpiritweb() {
@@ -78,14 +85,12 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
         return originId;
     }
 
-
-
-
-
     @Override
-    public CompoundTag serializeNBT(HolderLookup. Provider provider) {
-
-        CompoundTag tag = new CompoundTag();
+    public CompoundTag serializeNBT(
+            HolderLookup.Provider provider
+    ) {
+        CompoundTag tag =
+                new CompoundTag();
 
         tag.putBoolean(
                 TAG_ONBOARDING_COMPLETE,
@@ -119,46 +124,44 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
             HolderLookup.Provider provider,
             CompoundTag tag
     ) {
+
         resetPlayer();
+
+        if (tag == null) {
+            return;
+        }
 
         if (tag.contains(
                 TAG_SPIRITWEB,
                 Tag.TAG_COMPOUND
         )) {
             spiritweb.loadNBT(
-                    tag.getCompound(TAG_SPIRITWEB)
-            );
-        } else {
-            spiritweb.loadNBT(
-                    new CompoundTag()
+                    tag.getCompound(
+                            TAG_SPIRITWEB
+                    )
             );
         }
 
         boolean loadedOnboardingComplete =
-                tag.getBoolean(
+                tag.contains(
+                        TAG_ONBOARDING_COMPLETE,
+                        Tag.TAG_BYTE
+                )
+                        && tag.getBoolean(
                         TAG_ONBOARDING_COMPLETE
                 );
 
-        ResourceLocation loadedPlanetId = null;
-        ResourceLocation loadedOriginId = null;
+        ResourceLocation loadedPlanetId =
+                loadResourceLocation(
+                        tag,
+                        TAG_ORIGIN_PLANET
+                );
 
-        if (tag.contains(TAG_ORIGIN_PLANET)) {
-            loadedPlanetId =
-                    ResourceLocation.tryParse(
-                            tag.getString(
-                                    TAG_ORIGIN_PLANET
-                            )
-                    );
-        }
-
-        if (tag.contains(TAG_ORIGIN)) {
-            loadedOriginId =
-                    ResourceLocation.tryParse(
-                            tag.getString(
-                                    TAG_ORIGIN
-                            )
-                    );
-        }
+        ResourceLocation loadedOriginId =
+                loadResourceLocation(
+                        tag,
+                        TAG_ORIGIN
+                );
 
         if (loadedOnboardingComplete
                 && loadedPlanetId != null
@@ -168,9 +171,23 @@ public class CosmerePlayerData implements INBTSerializable<CompoundTag> {
                     loadedPlanetId,
                     loadedOriginId
             );
-
-        } else {
-            resetOnboarding();
         }
+    }
+
+    private static ResourceLocation
+    loadResourceLocation(
+            CompoundTag tag,
+            String key
+    ) {
+        if (!tag.contains(
+                key,
+                Tag.TAG_STRING
+        )) {
+            return null;
+        }
+
+        return ResourceLocation.tryParse(
+                tag.getString(key)
+        );
     }
 }

@@ -12,6 +12,7 @@ import net.rovalio.CosmereAPI.network.payload.OpenOnboardingS2CPayload;
 import net.rovalio.CosmereAPI.player.ConnectionData;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
 import net.rovalio.CosmereAPI.player.CosmerePlayerData;
+import net.rovalio.CosmereAPI.player.PlayerStateLifecycleRegistry;
 import net.rovalio.CosmereAPI.player.SpiritwebData;
 import org.slf4j.Logger;
 
@@ -30,6 +31,10 @@ public final class PlayerLoginHandler {
         NeoForge.EVENT_BUS.addListener(
                 PlayerLoginHandler::onPlayerLoggedIn
         );
+
+        NeoForge.EVENT_BUS.addListener(
+                PlayerLoginHandler::onPlayerRespawn
+        );
     }
 
     private static void onPlayerLoggedIn(
@@ -43,6 +48,13 @@ public final class PlayerLoginHandler {
 
         CosmerePlayerData data =
                 CosmereAttachments.get(player);
+
+        reconcilePlayerState(
+                player,
+                PlayerStateLifecycleRegistry
+                        .Reason
+                        .PLAYER_LOGIN
+        );
 
         notifyOrphanedAddonData(
                 player,
@@ -76,6 +88,48 @@ public final class PlayerLoginHandler {
         }
     }
 
+    private static void onPlayerRespawn(
+            PlayerEvent.PlayerRespawnEvent event
+    ) {
+        if (!(event.getEntity()
+                instanceof ServerPlayer player)) {
+
+            return;
+        }
+
+        reconcilePlayerState(
+                player,
+                PlayerStateLifecycleRegistry
+                        .Reason
+                        .PLAYER_RESPAWN
+        );
+    }
+
+    private static void reconcilePlayerState(
+            ServerPlayer player,
+            PlayerStateLifecycleRegistry.Reason reason
+    ) {
+        try {
+            PlayerStateLifecycleRegistry
+                    .recalculate(
+                            player,
+                            reason
+                    );
+
+        } catch (RuntimeException exception) {
+
+            //An addon failure must be reported, but must not prevent login or respawn.
+            LOGGER.error(
+                    "[Cosmere API] Player State Lifecycle "
+                            + "reconciliation failed for "
+                            + "player {} during {}",
+                    player.getGameProfile().getName(),
+                    reason,
+                    exception
+            );
+        }
+    }
+
     private static void notifyOrphanedAddonData(
             ServerPlayer player,
             SpiritwebData spiritweb
@@ -92,10 +146,7 @@ public final class PlayerLoginHandler {
             return;
         }
 
-        /*
-         * Only one player-facing warning is sent,
-         * regardless of how many orphaned data types exist.
-         */
+        // Only one player-facing warning is sent, regardless of how many orphaned data types exist.
         player.sendSystemMessage(
                 Component.literal(
                         "[Cosmere API] Data belonging to missing add-ons "

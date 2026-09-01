@@ -46,6 +46,10 @@ public final class InvestedArtCommandTree {
                                                         )
                                                 )
                                 )
+                )
+
+                .then(
+                        createInfoBranch()
                 );
     }
 
@@ -60,7 +64,27 @@ public final class InvestedArtCommandTree {
 
                 .then(
                         createRevokeBranch()
+                )
+
+                .then(
+                        createActionBranch()
                 );
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack>
+    createInfoBranch() {
+
+        var targetsBranch =
+                Commands.argument(
+                        "targets",
+                        EntityArgument.players()
+                );
+
+        InvestedArtCommandRegistry
+                .appendInfoBranches(targetsBranch);
+
+        return Commands.literal("info")
+                .then(targetsBranch);
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack>
@@ -72,10 +96,6 @@ public final class InvestedArtCommandTree {
                         EntityArgument.players()
                 );
 
-        /*
-         * Literal add-on branches take priority over
-         * the generic ResourceLocation argument.
-         */
         InvestedArtCommandRegistry
                 .appendGrantBranches(targetsBranch);
 
@@ -163,6 +183,22 @@ public final class InvestedArtCommandTree {
                 .then(targetsBranch);
     }
 
+    private static LiteralArgumentBuilder<CommandSourceStack>
+    createActionBranch() {
+
+        var targetsBranch =
+                Commands.argument(
+                        "targets",
+                        EntityArgument.players()
+                );
+
+        InvestedArtCommandRegistry
+                .appendActionBranches(targetsBranch);
+
+        return Commands.literal("action")
+                .then(targetsBranch);
+    }
+
     private static Set<ResourceLocation> getRevocableArts(
             com.mojang.brigadier.context.CommandContext<
                     CommandSourceStack
@@ -176,20 +212,12 @@ public final class InvestedArtCommandTree {
                         )
                 );
 
-        /*
-         * Registered Arts are suggested even when none
-         * of the selected players currently possesses them.
-         */
         revocableArts.addAll(
                 CosmereRegistries
                         .INVESTED_ART_REGISTRY
                         .keySet()
         );
 
-        /*
-         * Player-owned IDs are also included, allowing
-         * orphaned Arts to appear in autocomplete.
-         */
         for (var player :
                 EntityArgument.getPlayers(
                         context,

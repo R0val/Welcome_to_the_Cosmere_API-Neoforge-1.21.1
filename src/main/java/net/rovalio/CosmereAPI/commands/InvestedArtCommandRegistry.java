@@ -18,6 +18,18 @@ public final class InvestedArtCommandRegistry {
             > EXTENSIONS =
             new LinkedHashMap<>();
 
+    private static final Map<
+            ResourceLocation,
+            BranchExtension
+            > ACTION_EXTENSIONS =
+            new LinkedHashMap<>();
+
+    private static final Map<
+            ResourceLocation,
+            BranchExtension
+            > INFO_EXTENSIONS =
+            new LinkedHashMap<>();
+
     private InvestedArtCommandRegistry() {
     }
 
@@ -30,6 +42,16 @@ public final class InvestedArtCommandRegistry {
         );
 
         void configureRevoke(
+                LiteralArgumentBuilder<
+                        CommandSourceStack
+                        > branch
+        );
+    }
+
+    @FunctionalInterface
+    public interface BranchExtension {
+
+        void configure(
                 LiteralArgumentBuilder<
                         CommandSourceStack
                         > branch
@@ -64,11 +86,82 @@ public final class InvestedArtCommandRegistry {
         );
     }
 
+    public static void registerAction(
+            ResourceLocation scopeId,
+            BranchExtension extension
+    ) {
+        registerBranchExtension(
+                ACTION_EXTENSIONS,
+                scopeId,
+                extension,
+                "action"
+        );
+    }
+
+    public static void registerInfo(
+            ResourceLocation scopeId,
+            BranchExtension extension
+    ) {
+        registerBranchExtension(
+                INFO_EXTENSIONS,
+                scopeId,
+                extension,
+                "info"
+        );
+    }
+
+    private static void registerBranchExtension(
+            Map<ResourceLocation, BranchExtension> registry,
+            ResourceLocation scopeId,
+            BranchExtension extension,
+            String extensionType
+    ) {
+        Objects.requireNonNull(
+                scopeId,
+                "Invested Art command scope ID cannot be null"
+        );
+
+        Objects.requireNonNull(
+                extension,
+                "Invested Art "
+                        + extensionType
+                        + " extension cannot be null"
+        );
+
+        if (registry.containsKey(scopeId)) {
+            throw new IllegalStateException(
+                    "An Invested Art "
+                            + extensionType
+                            + " extension is already registered for: "
+                            + scopeId
+            );
+        }
+
+        registry.put(
+                scopeId,
+                extension
+        );
+    }
+
     public static boolean hasExtension(
             ResourceLocation commandId
     ) {
         return commandId != null
                 && EXTENSIONS.containsKey(commandId);
+    }
+
+    public static boolean hasActionExtension(
+            ResourceLocation scopeId
+    ) {
+        return scopeId != null
+                && ACTION_EXTENSIONS.containsKey(scopeId);
+    }
+
+    public static boolean hasInfoExtension(
+            ResourceLocation scopeId
+    ) {
+        return scopeId != null
+                && INFO_EXTENSIONS.containsKey(scopeId);
     }
 
     static void appendGrantBranches(
@@ -114,6 +207,55 @@ public final class InvestedArtCommandRegistry {
 
             entry.getValue()
                     .configureRevoke(branch);
+
+            parent.then(branch);
+        }
+    }
+
+    static void appendActionBranches(
+            ArgumentBuilder<
+                    CommandSourceStack,
+                    ?
+                    > parent
+    ) {
+        appendExtensionBranches(
+                parent,
+                ACTION_EXTENSIONS
+        );
+    }
+
+    static void appendInfoBranches(
+            ArgumentBuilder<
+                    CommandSourceStack,
+                    ?
+                    > parent
+    ) {
+        appendExtensionBranches(
+                parent,
+                INFO_EXTENSIONS
+        );
+    }
+
+    private static void appendExtensionBranches(
+            ArgumentBuilder<
+                    CommandSourceStack,
+                    ?
+                    > parent,
+            Map<ResourceLocation, BranchExtension> extensions
+    ) {
+        for (Map.Entry<
+                ResourceLocation,
+                BranchExtension
+                > entry : extensions.entrySet()) {
+
+            LiteralArgumentBuilder<CommandSourceStack>
+                    branch =
+                    Commands.literal(
+                            entry.getKey().toString()
+                    );
+
+            entry.getValue()
+                    .configure(branch);
 
             parent.then(branch);
         }
