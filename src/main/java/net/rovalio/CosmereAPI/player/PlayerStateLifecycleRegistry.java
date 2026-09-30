@@ -3,6 +3,7 @@ package net.rovalio.CosmereAPI.player;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.rovalio.CosmereAPI.util.CopyOnWriteRegistry;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -12,11 +13,11 @@ import java.util.Objects;
 
 public final class PlayerStateLifecycleRegistry {
 
-    private static final Map<
+    private static final CopyOnWriteRegistry<
             ResourceLocation,
             Handler
             > HANDLERS =
-            new LinkedHashMap<>();
+            new CopyOnWriteRegistry<>();
 
     private PlayerStateLifecycleRegistry() {
     }
@@ -35,25 +36,19 @@ public final class PlayerStateLifecycleRegistry {
                 "Lifecycle handler cannot be null"
         );
 
-        if (HANDLERS.containsKey(handlerId)) {
+        if (!HANDLERS.putIfAbsent(handlerId, handler)) {
             throw new IllegalStateException(
                     "A Player State Lifecycle handler "
                             + "is already registered with ID: "
                             + handlerId
             );
         }
-
-        HANDLERS.put(
-                handlerId,
-                handler
-        );
     }
 
     public static boolean hasHandler(
             ResourceLocation handlerId
     ) {
-        return handlerId != null
-                && HANDLERS.containsKey(handlerId);
+        return HANDLERS.containsKey(handlerId);
     }
 
     public static RecalculationContext recalculate(
@@ -76,7 +71,7 @@ public final class PlayerStateLifecycleRegistry {
         RuntimeException firstFailure = null;
 
         for (Map.Entry<ResourceLocation, Handler> entry :
-                HANDLERS.entrySet()) {
+                HANDLERS.entries().entrySet()) {
 
             RecalculationContext handlerContext =
                     new RecalculationContext();
@@ -134,7 +129,7 @@ public final class PlayerStateLifecycleRegistry {
         RuntimeException firstFailure = null;
 
         for (Map.Entry<ResourceLocation, Handler> entry :
-                HANDLERS.entrySet()) {
+                HANDLERS.entries().entrySet()) {
 
             try {
                 entry.getValue()

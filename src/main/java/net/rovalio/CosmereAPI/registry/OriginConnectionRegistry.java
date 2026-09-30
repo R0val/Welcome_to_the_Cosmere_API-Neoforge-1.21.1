@@ -3,20 +3,19 @@ package net.rovalio.CosmereAPI.registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.rovalio.CosmereAPI.player.*;
+import net.rovalio.CosmereAPI.util.CopyOnWriteRegistry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public final class OriginConnectionRegistry {
 
-    private static final Map<
+    private static final CopyOnWriteRegistry<
             ResourceLocation,
             List<ConnectionData>
             > CONNECTIONS_BY_ORIGIN =
-            new HashMap<>();
+            new CopyOnWriteRegistry<>();
 
     private OriginConnectionRegistry() {
     }
@@ -122,32 +121,32 @@ public final class OriginConnectionRegistry {
             );
         }
 
-        CONNECTIONS_BY_ORIGIN.put(
+        if (!CONNECTIONS_BY_ORIGIN.putIfAbsent(
                 originId,
                 List.copyOf(normalizedConnections)
-        );
+        )) {
+            throw new IllegalStateException(
+                    "Connections are already registered for origin: "
+                            + originId
+            );
+        }
     }
 
     public static List<ConnectionData> getConnections(
             ResourceLocation originId
     ) {
-        if (originId == null) {
-            return List.of();
-        }
+        List<ConnectionData> connections =
+                CONNECTIONS_BY_ORIGIN.get(originId);
 
-        return CONNECTIONS_BY_ORIGIN.getOrDefault(
-                originId,
-                List.of()
-        );
+        return connections == null
+                ? List.of()
+                : connections;
     }
 
     public static boolean hasConnections(
             ResourceLocation originId
     ) {
-        return originId != null
-                && CONNECTIONS_BY_ORIGIN.containsKey(
-                originId
-        );
+        return CONNECTIONS_BY_ORIGIN.containsKey(originId);
     }
 
     private static boolean isSupportedType(
