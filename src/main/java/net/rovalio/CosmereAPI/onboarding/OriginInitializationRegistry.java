@@ -2,15 +2,14 @@ package net.rovalio.CosmereAPI.onboarding;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.rovalio.CosmereAPI.util.CopyOnWriteRegistry;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public final class OriginInitializationRegistry {
 
-    private static final Map<ResourceLocation, OriginInitializer> INITIALIZERS =
-            new HashMap<>();
+    private static final CopyOnWriteRegistry<ResourceLocation, OriginInitializer> INITIALIZERS =
+            new CopyOnWriteRegistry<>();
 
     private OriginInitializationRegistry() {
     }
@@ -31,27 +30,19 @@ public final class OriginInitializationRegistry {
                 "Origin initializer cannot be null"
         );
 
-        if (INITIALIZERS.containsKey(originId)) {
+        if (!INITIALIZERS.putIfAbsent(originId, initializer)) {
             throw new IllegalStateException(
                     "An initializer is already registered for origin: "
                             + originId
             );
         }
-
-        INITIALIZERS.put(
-                originId,
-                initializer
-        );
     }
 
 
     public static boolean hasInitializer(
             ResourceLocation originId
     ) {
-        return originId != null
-                && INITIALIZERS.containsKey(
-                originId
-        );
+        return INITIALIZERS.containsKey(originId);
     }
 
     //Initialization

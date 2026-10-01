@@ -19,75 +19,40 @@ public final class ClientPayloadHandler {
             OpenOnboardingS2CPayload payload,
             IPayloadContext context
     ) {
-
-        LOGGER.info(
-                "[Cosmere API Onboarding] Open onboarding payload received on thread: {}",
-                Thread.currentThread().getName()
+        LOGGER.debug(
+                "[Cosmere API Onboarding] Opening temporary onboarding screen"
         );
 
-        context.enqueueWork(() -> {
-
-            LOGGER.info(
-                    "[Cosmere API Onboarding] Opening temporary onboarding screen on thread: {}",
-                    Thread.currentThread().getName()
-            );
-
-            Minecraft.getInstance().setScreen(
-                    new TemporaryOnboardingScreen()
-            );
-
-        }).exceptionally(exception -> {
-
-            LOGGER.error(
-                    "[Cosmere API Onboarding] Failed to open onboarding screen",
-                    exception
-            );
-
-            return null;
-        });
+        Minecraft.getInstance().setScreen(
+                new TemporaryOnboardingScreen()
+        );
     }
 
     public static void handleOnboardingResult(
             OnboardingResultS2CPayload payload,
             IPayloadContext context
     ) {
-        LOGGER.info(
-                "[Cosmere API Onboarding] Result {} received | Thread: {}",
-                payload.result(),
-                Thread.currentThread().getName()
-        );
+        Minecraft minecraft =
+                Minecraft.getInstance();
 
-        context.enqueueWork(() -> {
-            Minecraft minecraft =
-                    Minecraft.getInstance();
+        if (!(minecraft.screen
+                instanceof AbstractOnboardingScreen screen)) {
 
-            if (!(minecraft.screen
-                    instanceof AbstractOnboardingScreen screen)) {
-
-                LOGGER.warn(
-                        "[Cosmere API Onboarding] Result {} received without an onboarding screen open",
-                        payload.result()
-                );
-
-                return;
-            }
-
-            if (payload.result().isSuccess()) {
-                minecraft.setScreen(null);
-                return;
-            }
-
-            screen.setOnboardingResult(
+            LOGGER.warn(
+                    "[Cosmere API Onboarding] Result {} received without an onboarding screen open",
                     payload.result()
             );
 
-        }).exceptionally(exception -> {
-            LOGGER.error(
-                    "[Cosmere API Onboarding] Failed to process onboarding result",
-                    exception
-            );
+            return;
+        }
 
-            return null;
-        });
+        if (payload.result().isSuccess()) {
+            minecraft.setScreen(null);
+            return;
+        }
+
+        screen.setOnboardingResult(
+                payload.result()
+        );
     }
 }

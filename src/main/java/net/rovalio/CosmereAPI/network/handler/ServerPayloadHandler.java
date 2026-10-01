@@ -9,176 +9,129 @@ import net.rovalio.CosmereAPI.onboarding.OnboardingManager;
 import net.rovalio.CosmereAPI.onboarding.OnboardingResult;
 import org.slf4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+
 public final class ServerPayloadHandler {
 
     private static final Logger LOGGER =
             LogUtils.getLogger();
 
+    private static final int REQUEST_COOLDOWN_TICKS = 10;
+
+    private static final Map<UUID, Integer> LAST_REQUEST_TICK =
+            new HashMap<>();
+
     private ServerPayloadHandler() {
     }
 
-    // SELECT SPECIFIC ORIGIN
     public static void handleSelectOrigin(
             SelectOriginC2SPayload payload,
             IPayloadContext context
     ) {
-        LOGGER.info(
-                "[Cosmere API Onboarding] Origin selection received: {} | Thread: {}",
+        process(
+                context,
+                "Specific origin selection",
                 payload.originId(),
-                Thread.currentThread().getName()
+                player -> OnboardingManager.selectOrigin(
+                        player,
+                        payload.originId()
+                )
         );
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-                return;
-            }
-
-            OnboardingResult result =
-                    executeSafely(
-                            () -> OnboardingManager.selectOrigin(
-                                    player,
-                                    payload.originId()
-                            ),
-                            player,
-                            "Specific origin selection"
-                    );
-
-            sendOnboardingResult(
-                    player,
-                    result
-            );
-
-            LOGGER.info(
-                    "[Cosmere API Onboarding] Origin {} returned {} for player {}",
-                    payload.originId(),
-                    result,
-                    player.getGameProfile().getName()
-            );
-
-        }).exceptionally(exception -> {
-
-            LOGGER.error(
-                    "[Cosmere API Onboarding] Failed to process origin selection",
-                    exception
-            );
-
-            return null;
-        });
     }
 
-    // RANDOM GLOBAL ORIGIN
     public static void handleRandomGlobalOrigin(
             RandomGlobalOriginC2SPayload payload,
             IPayloadContext context
     ) {
-        LOGGER.info(
-                "[Cosmere API Onboarding] Global random origin requested | Thread: {}",
-                Thread.currentThread().getName()
+        process(
+                context,
+                "Global random origin selection",
+                "global",
+                OnboardingManager::selectRandomOriginGlobal
         );
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-                return;
-            }
-
-            OnboardingResult result =
-                    executeSafely(
-                            () -> OnboardingManager
-                                    .selectRandomOriginGlobal(
-                                            player
-                                    ),
-                            player,
-                            "Global random origin selection"
-                    );
-
-            sendOnboardingResult(
-                    player,
-                    result
-            );
-
-            LOGGER.info(
-                    "[Cosmere API Onboarding] Global random origin returned {} for player {}",
-                    result,
-                    player.getGameProfile().getName()
-            );
-
-        }).exceptionally(exception -> {
-
-            LOGGER.error(
-                    "[Cosmere API Onboarding] Failed to process global random origin selection",
-                    exception
-            );
-
-            return null;
-        });
     }
 
-    // RANDOM ORIGIN FOR SELECTED PLANET
     public static void handleRandomPlanetOrigin(
             RandomPlanetOriginC2SPayload payload,
             IPayloadContext context
     ) {
-        LOGGER.info(
-                "[Cosmere API Onboarding] Random origin requested for planet: {} | Thread: {}",
+        process(
+                context,
+                "Planet random origin selection",
                 payload.planetId(),
-                Thread.currentThread().getName()
+                player -> OnboardingManager.selectRandomOriginForPlanet(
+                        player,
+                        payload.planetId()
+                )
+        );
+    }
+
+    public static void forget(ServerPlayer player) {
+        LAST_REQUEST_TICK.remove(player.getUUID());
+    }
+
+    public static void clear() {
+        LAST_REQUEST_TICK.clear();
+    }
+
+    private static void process(
+            IPayloadContext context,
+            String operationName,
+            Object target,
+            Function<ServerPlayer, OnboardingResult> operation
+    ) {
+        if (!(context.player() instanceof ServerPlayer player)
+                || !acquireRequestSlot(player)) {
+            return;
+        }
+
+        OnboardingResult result =
+                executeSafely(
+                        operation,
+                        player,
+                        operationName
+                );
+
+        sendOnboardingResult(
+                player,
+                result
         );
 
-        context.enqueueWork(() -> {
+        LOGGER.debug(
+                "[Cosmere API Onboarding] {} for {} returned {} for player {}",
+                operationName,
+                target,
+                result,
+                player.getGameProfile().getName()
+        );
+    }
 
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-                return;
-            }
+    private static boolean acquireRequestSlot(
+            ServerPlayer player
+    ) {
+        int now = player.server.getTickCount();
+        Integer previous = LAST_REQUEST_TICK.get(player.getUUID());
 
-            OnboardingResult result =
-                    executeSafely(
-                            () -> OnboardingManager
-                                    .selectRandomOriginForPlanet(
-                                            player,
-                                            payload.planetId()
-                                    ),
-                            player,
-                            "Planet random origin selection"
-                    );
+        if (previous != null
+                && now - previous < REQUEST_COOLDOWN_TICKS) {
+            return false;
+        }
 
-            sendOnboardingResult(
-                    player,
-                    result
-            );
-
-            LOGGER.info(
-                    "[Cosmere API Onboarding] Random origin for planet {} returned {} for player {}",
-                    payload.planetId(),
-                    result,
-                    player.getGameProfile().getName()
-            );
-
-        }).exceptionally(exception -> {
-
-            LOGGER.error(
-                    "[Cosmere API Onboarding] Failed to process random planet origin selection",
-                    exception
-            );
-
-            return null;
-        });
+        LAST_REQUEST_TICK.put(player.getUUID(), now);
+        return true;
     }
 
     private static OnboardingResult executeSafely(
-            java.util.function.Supplier<
-                    OnboardingResult
-                    > operation,
+            Function<ServerPlayer, OnboardingResult> operation,
             ServerPlayer player,
             String operationName
     ) {
         try {
             OnboardingResult result =
-                    operation.get();
+                    operation.apply(player);
 
             return result != null
                     ? result

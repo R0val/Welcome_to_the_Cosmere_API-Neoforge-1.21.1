@@ -1,7 +1,6 @@
 package net.rovalio.CosmereAPI.network;
 
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.HandlerThread;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.rovalio.CosmereAPI.network.handler.ClientPayloadHandler;
 import net.rovalio.CosmereAPI.network.handler.ServerPayloadHandler;
@@ -19,14 +18,14 @@ public final class CosmereNetworking {
     ) {
 
         final PayloadRegistrar registrar =
-                event.registrar(PROTOCOL_VERSION)
-                        .executesOn(HandlerThread.NETWORK);
+                event.registrar(PROTOCOL_VERSION);
 
         // REAL
         registrar.playToClient(
                 OpenOnboardingS2CPayload.TYPE,
                 OpenOnboardingS2CPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleOpenOnboarding
+                (payload, context) ->
+                        ClientPayloadHandler.handleOpenOnboarding(payload, context)
         );
 
         registrar.playToServer(
@@ -50,7 +49,8 @@ public final class CosmereNetworking {
         registrar.playToClient(
                 OnboardingResultS2CPayload.TYPE,
                 OnboardingResultS2CPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleOnboardingResult
+                (payload, context) ->
+                        ClientPayloadHandler.handleOnboardingResult(payload, context)
         );
     }
 }

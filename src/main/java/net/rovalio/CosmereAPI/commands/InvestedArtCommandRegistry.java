@@ -5,30 +5,30 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.resources.ResourceLocation;
+import net.rovalio.CosmereAPI.util.CopyOnWriteRegistry;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public final class InvestedArtCommandRegistry {
 
-    private static final Map<
+    private static final CopyOnWriteRegistry<
             ResourceLocation,
             CommandExtension
             > EXTENSIONS =
-            new LinkedHashMap<>();
+            new CopyOnWriteRegistry<>();
 
-    private static final Map<
+    private static final CopyOnWriteRegistry<
             ResourceLocation,
             BranchExtension
             > ACTION_EXTENSIONS =
-            new LinkedHashMap<>();
+            new CopyOnWriteRegistry<>();
 
-    private static final Map<
+    private static final CopyOnWriteRegistry<
             ResourceLocation,
             BranchExtension
             > INFO_EXTENSIONS =
-            new LinkedHashMap<>();
+            new CopyOnWriteRegistry<>();
 
     private InvestedArtCommandRegistry() {
     }
@@ -72,18 +72,13 @@ public final class InvestedArtCommandRegistry {
                 "Invested Art command extension cannot be null"
         );
 
-        if (EXTENSIONS.containsKey(commandId)) {
+        if (!EXTENSIONS.putIfAbsent(commandId, extension)) {
             throw new IllegalStateException(
                     "An Invested Art command extension "
                             + "is already registered for: "
                             + commandId
             );
         }
-
-        EXTENSIONS.put(
-                commandId,
-                extension
-        );
     }
 
     public static void registerAction(
@@ -111,7 +106,7 @@ public final class InvestedArtCommandRegistry {
     }
 
     private static void registerBranchExtension(
-            Map<ResourceLocation, BranchExtension> registry,
+            CopyOnWriteRegistry<ResourceLocation, BranchExtension> registry,
             ResourceLocation scopeId,
             BranchExtension extension,
             String extensionType
@@ -128,7 +123,7 @@ public final class InvestedArtCommandRegistry {
                         + " extension cannot be null"
         );
 
-        if (registry.containsKey(scopeId)) {
+        if (!registry.putIfAbsent(scopeId, extension)) {
             throw new IllegalStateException(
                     "An Invested Art "
                             + extensionType
@@ -136,32 +131,24 @@ public final class InvestedArtCommandRegistry {
                             + scopeId
             );
         }
-
-        registry.put(
-                scopeId,
-                extension
-        );
     }
 
     public static boolean hasExtension(
             ResourceLocation commandId
     ) {
-        return commandId != null
-                && EXTENSIONS.containsKey(commandId);
+        return EXTENSIONS.containsKey(commandId);
     }
 
     public static boolean hasActionExtension(
             ResourceLocation scopeId
     ) {
-        return scopeId != null
-                && ACTION_EXTENSIONS.containsKey(scopeId);
+        return ACTION_EXTENSIONS.containsKey(scopeId);
     }
 
     public static boolean hasInfoExtension(
             ResourceLocation scopeId
     ) {
-        return scopeId != null
-                && INFO_EXTENSIONS.containsKey(scopeId);
+        return INFO_EXTENSIONS.containsKey(scopeId);
     }
 
     static void appendGrantBranches(
@@ -173,7 +160,7 @@ public final class InvestedArtCommandRegistry {
         for (Map.Entry<
                 ResourceLocation,
                 CommandExtension
-                > entry : EXTENSIONS.entrySet()) {
+                > entry : EXTENSIONS.entries().entrySet()) {
 
             LiteralArgumentBuilder<CommandSourceStack>
                     branch =
@@ -197,7 +184,7 @@ public final class InvestedArtCommandRegistry {
         for (Map.Entry<
                 ResourceLocation,
                 CommandExtension
-                > entry : EXTENSIONS.entrySet()) {
+                > entry : EXTENSIONS.entries().entrySet()) {
 
             LiteralArgumentBuilder<CommandSourceStack>
                     branch =
@@ -241,12 +228,12 @@ public final class InvestedArtCommandRegistry {
                     CommandSourceStack,
                     ?
                     > parent,
-            Map<ResourceLocation, BranchExtension> extensions
+            CopyOnWriteRegistry<ResourceLocation, BranchExtension> extensions
     ) {
         for (Map.Entry<
                 ResourceLocation,
                 BranchExtension
-                > entry : extensions.entrySet()) {
+                > entry : extensions.entries().entrySet()) {
 
             LiteralArgumentBuilder<CommandSourceStack>
                     branch =

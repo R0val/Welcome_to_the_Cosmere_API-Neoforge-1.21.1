@@ -7,7 +7,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.rovalio.CosmereAPI.network.handler.ServerPayloadHandler;
 import net.rovalio.CosmereAPI.network.payload.OpenOnboardingS2CPayload;
 import net.rovalio.CosmereAPI.player.ConnectionData;
 import net.rovalio.CosmereAPI.player.CosmereAttachments;
@@ -35,6 +37,30 @@ public final class PlayerLoginHandler {
         NeoForge.EVENT_BUS.addListener(
                 PlayerLoginHandler::onPlayerRespawn
         );
+
+        NeoForge.EVENT_BUS.addListener(
+                PlayerLoginHandler::onPlayerLoggedOut
+        );
+
+        NeoForge.EVENT_BUS.addListener(
+                PlayerLoginHandler::onServerStopped
+        );
+    }
+
+    private static void onPlayerLoggedOut(
+            PlayerEvent.PlayerLoggedOutEvent event
+    ) {
+        if (event.getEntity()
+                instanceof ServerPlayer player) {
+
+            ServerPayloadHandler.forget(player);
+        }
+    }
+
+    private static void onServerStopped(
+            ServerStoppedEvent event
+    ) {
+        ServerPayloadHandler.clear();
     }
 
     private static void onPlayerLoggedIn(
@@ -61,7 +87,7 @@ public final class PlayerLoginHandler {
                 data.getSpiritweb()
         );
 
-        LOGGER.info(
+        LOGGER.debug(
                 "[Cosmere API Onboarding] Player login detected: {} | onboardingComplete: {}",
                 player.getGameProfile().getName(),
                 data.isOnboardingComplete()
@@ -69,7 +95,7 @@ public final class PlayerLoginHandler {
 
         if (!data.isOnboardingComplete()) {
 
-            LOGGER.info(
+            LOGGER.debug(
                     "[Cosmere API Onboarding] Player {} requires onboarding.",
                     player.getGameProfile().getName()
             );
@@ -81,7 +107,7 @@ public final class PlayerLoginHandler {
 
         } else {
 
-            LOGGER.info(
+            LOGGER.debug(
                     "[Cosmere API Onboarding] Player {} has already completed onboarding.",
                     player.getGameProfile().getName()
             );
